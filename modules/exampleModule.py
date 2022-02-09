@@ -1,4 +1,4 @@
-from ..abstractModule import *
+from modules.abstractModule import *
 
 class ExampleModule(AbstractModule):
 
@@ -11,9 +11,6 @@ class ExampleModule(AbstractModule):
             ModuleArgumentDescription("Arg2", "This is the second argument."),
             ModuleArgumentDescription("Arg3", "This is the third argument."),
         ]
-
-    def __init__(self):
-        Base.__init__(self, ModuleInformation(name, description, arguments))
 
     def execute(self):
         print("Executing...\n\n")

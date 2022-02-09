@@ -1,6 +1,8 @@
 import shlex
 import pkgutil
 import importlib
+from modules import *
+from tabulate import tabulate
 
 def printBanner(version, onlineAttacks, offlineAttacks):
     versionLine = "{0:<28}".format("Cryptosploit v" + version)
@@ -27,13 +29,13 @@ def printBanner(version, onlineAttacks, offlineAttacks):
 
 def printHelp():
     print("\n\n> Help here. <\n\n")
-
-def getModules():
-    return [] # TODO: get name and description pairs from module classes in modules folder
-    
+       
 def listModules():
-    # TODO: use a library to pretty print the module names and descriptions
-    print(getModules())
+    modules = []
+    moduleClasses = AbstractModule.__subclasses__()
+    for c in moduleClasses:
+        modules.append([c.name, c.description])
+    print('\n', tabulate(modules, headers=['Name', 'Description']), '\n')
 
 def handleCommands():
     while True:
