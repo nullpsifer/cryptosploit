@@ -3,10 +3,11 @@ from typing import List
 
 class ModuleArgumentDescription():
 
-    def __init__(self, name: str, description: str, required: bool):
+    def __init__(self, name: str, description: str, required: bool, defaultValue=None):
         self._name = name
         self._description = description
         self._required = required
+        self._defaultValue = defaultValue
 
     def _get_name(self):
         return self._name
@@ -16,12 +17,17 @@ class ModuleArgumentDescription():
         
     def _get_required(self):
         return self._required
+        
+    def _get_default_value(self):
+        return self._defaultValue
 
     name = property(fget=_get_name, doc="Get name of argument.")
 
     description = property(fget=_get_description, doc="Get description of argument.")
     
     required = property(fget=_get_required, doc="Is this field required to run the module?")
+    
+    defaultValue = property(fget=_get_default_value, doc="Returns default value or None.")
     
 class AbstractModule(ABC):
 
@@ -33,6 +39,9 @@ class AbstractModule(ABC):
     
     def __init__(self):
         self._specified_arguments = {}
+        for argumentDescription in self.__class__.arguments:
+            if argumentDescription.defaultValue != None:
+                self.set_argument_value(argumentDescription.name, argumentDescription.defaultValue)
 
     def get_module_information(self):
         return self._module_information
