@@ -3,6 +3,7 @@ import pkgutil
 import importlib
 from modules import *
 from tabulate import tabulate
+import textwrap
 
 version = "1.0"
 modules = []
@@ -53,8 +54,16 @@ def getModuleList():
     for c in moduleClasses:
         modules.append([c.name, c.description])
         
-def listModules(): 
-    print('\n', tabulate(modules, headers=['Name', 'Description']), '\n')
+def listModules():
+    print('\n', tabulate(
+        [
+            [
+                textwrap.fill(m[0], 25, break_long_words=True), # name
+                textwrap.fill(m[1], 50, break_long_words=False) # description
+                ]
+            for m in modules
+            ],
+        headers=['Name', 'Description']), '\n')
 
 def useModule(module):
     global currentModule;
@@ -66,7 +75,18 @@ def useModule(module):
 
 def showOptions():
     if currentModule != None:
-        options = [[arg.name, arg.description, arg.required, currentModule.get_argument_value(arg.name)] for arg in currentModule.arguments]
+        options = [
+            [
+                textwrap.fill(arg.name, 15, break_long_words=True),
+                textwrap.fill(arg.description, 35, break_long_words=False),
+                arg.required,
+                textwrap.fill(
+                    '' if currentModule.get_argument_value(arg.name) == None
+                    else str(currentModule.get_argument_value(arg.name)),
+                    20, break_long_words=True)
+                ]
+            for arg in currentModule.arguments
+            ]
         print('\n', tabulate(options, headers=['Name', 'Description', 'Required', 'Value']), '\n')
 
 def setOption(optionName, optionValue):
