@@ -7,9 +7,9 @@ class ExampleModule(AbstractModule):
     description = "This is an example module."
 
     arguments = [
-            ModuleArgumentDescription("Arg1", "This is the first argument."),
-            ModuleArgumentDescription("Arg2", "This is the second argument."),
-            ModuleArgumentDescription("Arg3", "This is the third argument."),
+            ModuleArgumentDescription("Arg1", "This is the first argument.", True),
+            ModuleArgumentDescription("Arg2", "This is the second argument.", True),
+            ModuleArgumentDescription("Arg3", "This is the third argument.", False),
         ]
 
     def execute(self):

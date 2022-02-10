@@ -33,7 +33,19 @@ def printBanner():
 # TODO: refactor this entire file and seperate UI rendering code from flow logic code. Most of the code in this file should be broken into seperate files.
 
 def printHelp():
-    print("\n\n> Help here. <\n\n")
+    print("""\
+
+ Command                Description
+---------------------  -----------------------------------------------
+
+help                   Display this screen.
+listmods               List available modules.
+use {module}           Select module named {module} to use.
+options                Show module options and their current values.
+set {option} {value}   Set option to value by name.
+execute                Execute the module.
+
+""")
 
 def getModuleList():
     global moduleClasses
@@ -50,10 +62,21 @@ def useModule(module):
     if moduleClass == None:
         print("No module named '{}' found.\n".format(module))
     else:
-        currentModule = moduleClass
+        currentModule = moduleClass()
 
 def showOptions():
-    pass
+    if currentModule != None:
+        options = [[arg.name, arg.description, arg.required, currentModule.get_argument_value(arg.name)] for arg in currentModule.arguments]
+        print('\n', tabulate(options, headers=['Name', 'Description', 'Required', 'Value']), '\n')
+
+def setOption(optionName, optionValue):
+    currentModule.set_argument_value(optionName, optionValue)
+
+def execute():
+    if not currentModule.all_required_parameters_set():
+        print("Some required parameters are missing.");
+        return
+    currentModule.execute()
     
 def handleCommands():
     while True:
@@ -79,6 +102,13 @@ def handleCommands():
                 useModule(args[0])
         elif cmd == 'options':
             showOptions()
+        elif cmd == 'set':
+            if len(args) != 2:
+                printHelp()
+            else:
+                setOption(args[0], args[1])
+        elif cmd == 'execute':
+            execute()
         else:
             print("Unknown command '{cmd}'. Type 'help' for help.\n\n".format(cmd=cmd))
     
