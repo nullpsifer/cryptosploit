@@ -40,22 +40,21 @@ class ExampleModule(AbstractModule):
             )
             return
 
-        # Process the result of the SSL 2.0 scan command
-        ssl2_attempt = server_scan_result.scan_result.ssl_2_0_cipher_suites
-        if ssl2_attempt.status == ScanCommandAttemptStatusEnum.ERROR:
-            _print_failed_scan_command_attempt(ssl2_attempt)
-        elif ssl2_attempt.status == ScanCommandAttemptStatusEnum.COMPLETED:
-            ssl2_result = ssl2_attempt.result
-            print("\nAccepted cipher suites for SSL 2.0:")
-            for accepted_cipher_suite in ssl2_result.accepted_cipher_suites:
-                print(f"-> {accepted_cipher_suite.cipher_suite.name}")
+        def proccessResults(attempt, scanName):
+            if attempt.status == ScanCommandAttemptStatusEnum.ERROR:
+                _print_failed_scan_command_attempt(attempt)
+            elif attempt.status == ScanCommandAttemptStatusEnum.COMPLETED:
+                print("\nAccepted cipher suites for {}:".format(scanName))
+                for accepted_cipher_suite in attempt.result.accepted_cipher_suites:
+                    print(f"-> {accepted_cipher_suite.cipher_suite.name}")
+        
 
-        # Process the result of the TLS 1.3 scan command
-        tls1_3_attempt = server_scan_result.scan_result.tls_1_3_cipher_suites
-        if tls1_3_attempt.status == ScanCommandAttemptStatusEnum.ERROR:
-            _print_failed_scan_command_attempt(ssl2_attempt)
-        elif tls1_3_attempt.status == ScanCommandAttemptStatusEnum.COMPLETED:
-            tls1_3_result = tls1_3_attempt.result
-            print("\nAccepted cipher suites for TLS 1.3:")
-            for accepted_cipher_suite in tls1_3_result.accepted_cipher_suites:
-                print(f"-> {accepted_cipher_suite.cipher_suite.name}")
+        proccessResults(server_scan_result.scan_result.ssl_2_0_cipher_suites, 'SSL 2.0')
+        proccessResults(server_scan_result.scan_result.ssl_3_0_cipher_suites, 'SSL 3.0')
+        
+        proccessResults(server_scan_result.scan_result.tls_1_0_cipher_suites, 'TLS 1.0')
+        proccessResults(server_scan_result.scan_result.tls_1_1_cipher_suites, 'TLS 1.1')
+        proccessResults(server_scan_result.scan_result.tls_1_2_cipher_suites, 'TLS 1.2')
+        proccessResults(server_scan_result.scan_result.tls_1_3_cipher_suites, 'TLS 1.3')
+        
+        print('\n')
