@@ -80,8 +80,6 @@ def execute():
     
 def handleCommands():
     while True:
-        # TODO: add module name to input prompt if finite state machine allows it
-        # csp(someattack)>
         inputPrompt = None
         if currentModule != None:
             inputPrompt = 'csp({})> '.format(currentModule.name)
@@ -89,8 +87,6 @@ def handleCommands():
             inputPrompt = 'csp> '
         cmd, *args = shlex.split(input(inputPrompt))
 
-        # TODO: implement state machine to track which commands are currently available
-        # https://refactoring.guru/design-patterns/state
         if cmd == 'help':
             printHelp()
         elif cmd == 'listmods':
