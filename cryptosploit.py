@@ -90,6 +90,9 @@ def showOptions():
         print('\n', tabulate(options, headers=['Name', 'Description', 'Required', 'Value']), '\n')
 
 def setOption(optionName, optionValue):
+    if not currentModule:
+        print("No module selected.")
+        return
     currentModule.set_argument_value(optionName, optionValue)
 
 def execute():
