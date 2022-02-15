@@ -93,8 +93,11 @@ def setOption(optionName, optionValue):
     currentModule.set_argument_value(optionName, optionValue)
 
 def execute():
+    if not currentModule:
+        print("No module selected.")
+        return
     if not currentModule.all_required_parameters_set():
-        print("Some required parameters are missing.");
+        print("Some required parameters are missing.")
         return
     currentModule.execute()
     
@@ -105,7 +108,10 @@ def handleCommands():
             inputPrompt = 'csp({})> '.format(currentModule.name)
         else:
             inputPrompt = 'csp> '
-        cmd, *args = shlex.split(input(inputPrompt))
+        readInput = input(inputPrompt)
+        if not readInput or not readInput.strip():
+            continue
+        cmd, *args = shlex.split(readInput)
 
         if cmd == 'help':
             printHelp()
