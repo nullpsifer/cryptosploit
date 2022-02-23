@@ -3,7 +3,6 @@ from utils.paddingoracle import PaddingOracleAttack
 from json import loads
 import requests
 
-
 class PaddingOracleModule(AbstractModule):
     name = 'padding_oracle_attack'
 
