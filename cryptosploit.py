@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import shlex
 import pkgutil
 import importlib
@@ -5,16 +7,81 @@ from modules import *
 from tabulate import tabulate
 import textwrap
 
+from abc import *
+
 version = "1.0"
-modules = []
-moduleClasses = None
 
-currentModule = None
+class Interface(ABC):
 
-def printBanner():
-    versionLine = "{0:<28}".format("Cryptosploit v" + version)
-    modulesLine = "{0:<28}".format(str(len(modules)) + " modules")
-    print("""\
+    _state = None
+    _module = None
+    _modules = []
+    _moduleClasses = None
+
+    def __init__(self, state: State) -> None:
+        self.setState(state)
+        self._getModuleList()
+    
+    def setState(self, state: State):
+        self._state = state
+        self._state.interface = self
+        
+    def _getModuleList(self):
+        self._moduleClasses = AbstractModule.__subclasses__()
+        for c in self._moduleClasses:
+            self._modules.append([c.name, c.description])
+
+    def use(self, moduleName):
+        self._state.use(moduleName)
+        
+    def set(self, varName, varValue):
+        self._state.use(varName, varValue)
+        
+    def execute(self):
+        self._state.execute()
+        
+    @abstractmethod
+    def handleCommands(self):
+        pass
+ 
+    @abstractmethod
+    def showOptions(self):
+        pass
+
+    @abstractmethod
+    def printHelp(self):
+        pass
+
+    @abstractmethod
+    def listModules(self):
+        pass
+        
+    @property
+    def module(self) -> AbstractModule:
+        return self._module
+        
+    @module.setter
+    def module(self, module: AbstractModule) -> None:
+        self._module = module
+        
+    @property
+    def moduleClasses(self):
+        return self._moduleClasses
+        
+    @property
+    def modules(self):
+        return self._modules
+     
+class TerminalInterface(Interface):
+    
+    def __init__(self, state: State) -> None:
+        super().__init__(state)
+        self._printBanner()
+            
+    def _printBanner(self):
+        versionLine = "{0:<28}".format("Cryptosploit v" + version)
+        modulesLine = "{0:<28}".format(str(len(self._modules)) + " modules")
+        print("""\
 
  █▀▀ █▀█ █▄█ █▀█ ▀█▀ █▀█ █▀ █▀█ █░░ █▀█ █ ▀█▀
  █▄▄ █▀▄ ░█░ █▀▀ ░█░ █▄█ ▄█ █▀▀ █▄▄ █▄█ █ ░█░
@@ -29,12 +96,65 @@ def printBanner():
                                              ██░░░░░░░░██                  
                                                ████████                    
 
-        """)
+""")
 
-# TODO: refactor this entire file and seperate UI rendering code from flow logic code. Most of the code in this file should be broken into seperate files.
+    def handleCommands(self):
+        while True:
+            inputPrompt = None
+            if self._module != None:
+                inputPrompt = 'csp({})> '.format(self._module.name)
+            else:
+                inputPrompt = 'csp> '
+            readInput = input(inputPrompt)
+            if not readInput or not readInput.strip():
+                continue
+            cmd, *args = shlex.split(readInput)
+            self._doCommand(cmd, *args) 
+        
+    def _doCommand(self, cmd, *args):
+        if cmd == 'help':
+            self._state.printHelp()
+        elif cmd == 'listmods':
+            self._state.listModules()
+        elif cmd == 'use':
+            if len(args) == 0:
+                self._state.printHelp()
+            else:
+                self._printCommandResponse(self._state.use(args[0]))
+        elif cmd == 'options':
+            self._printCommandResponse(self._state.showOptions())
+        elif cmd == 'set':
+            if len(args) != 2:
+                self._state.printHelp()
+            else:
+                self._state.setOption(args[0], args[1])
+        elif cmd == 'execute':
+            self._printCommandResponse(self._state.execute())
+        else:
+            print("Unknown command '{cmd}'. Type 'help' for help.\n\n".format(cmd=cmd))
 
-def printHelp():
-    print("""\
+    def _printCommandResponse(self, responseText):
+        if responseText is not None:
+            print(responseText)
+        
+    def showOptions(self):
+        if self._module != None:
+            options = [
+                [
+                    textwrap.fill(arg.name, 15, break_long_words=True),
+                    textwrap.fill(arg.description, 35, break_long_words=False),
+                    arg.required,
+                    textwrap.fill(
+                        '' if self._module.get_argument_value(arg.name) == None
+                        else str(self._module.get_argument_value(arg.name)),
+                        20, break_long_words=True)
+                    ]
+                for arg in self._module.arguments
+                ]
+            print('\n', tabulate(options, headers=['Name', 'Description', 'Required', 'Value']), '\n')
+            
+    def printHelp(self):
+        print("""\
 
  Command                Description
 ---------------------  -----------------------------------------------
@@ -48,99 +168,92 @@ execute                Execute the module.
 
 """)
 
-def getModuleList():
-    global moduleClasses
-    moduleClasses = AbstractModule.__subclasses__()
-    for c in moduleClasses:
-        modules.append([c.name, c.description])
+    def listModules(self):
+        print('\n', tabulate(
+            [
+                [
+                    textwrap.fill(m[0], 25, break_long_words=True), # name
+                    textwrap.fill(m[1], 50, break_long_words=False) # description
+                    ]
+                for m in self._modules
+                ],
+            headers=['Name', 'Description']), '\n')
+
+class State(ABC):
+
+    @property
+    def interface(self) -> Interface:
+        return self._interface
         
-def listModules():
-    print('\n', tabulate(
-        [
-            [
-                textwrap.fill(m[0], 25, break_long_words=True), # name
-                textwrap.fill(m[1], 50, break_long_words=False) # description
-                ]
-            for m in modules
-            ],
-        headers=['Name', 'Description']), '\n')
-
-def useModule(module):
-    global currentModule;
-    moduleClass = next((c for c in moduleClasses if c.name == module), None)
-    if moduleClass == None:
-        print("No module named '{}' found.\n".format(module))
-    else:
-        currentModule = moduleClass()
-
-def showOptions():
-    if currentModule != None:
-        options = [
-            [
-                textwrap.fill(arg.name, 15, break_long_words=True),
-                textwrap.fill(arg.description, 35, break_long_words=False),
-                arg.required,
-                textwrap.fill(
-                    '' if currentModule.get_argument_value(arg.name) == None
-                    else str(currentModule.get_argument_value(arg.name)),
-                    20, break_long_words=True)
-                ]
-            for arg in currentModule.arguments
-            ]
-        print('\n', tabulate(options, headers=['Name', 'Description', 'Required', 'Value']), '\n')
-
-def setOption(optionName, optionValue):
-    if not currentModule:
-        print("No module selected.")
-        return
-    currentModule.set_argument_value(optionName, optionValue)
-
-def execute():
-    if not currentModule:
-        print("No module selected.")
-        return
-    if not currentModule.all_required_parameters_set():
-        print("Some required parameters are missing.")
-        return
-    currentModule.execute()
-    
-def handleCommands():
-    while True:
-        inputPrompt = None
-        if currentModule != None:
-            inputPrompt = 'csp({})> '.format(currentModule.name)
+    @interface.setter
+    def interface(self, interface: Interface) -> None:
+        self._interface = interface
+        
+    @abstractmethod
+    def setOption(self, optionName, optionValue) -> str:
+        pass
+        
+    @abstractmethod
+    def execute(self) -> str:
+        pass
+        
+    @abstractmethod
+    def showOptions(self):
+        pass
+        
+    def use(self, moduleName) -> str:
+        moduleClass = next((c for c in self.interface.moduleClasses if c.name == moduleName), None)
+        if moduleClass == None:
+            return "No module named '{}' found.\n".format(moduleName)
         else:
-            inputPrompt = 'csp> '
-        readInput = input(inputPrompt)
-        if not readInput or not readInput.strip():
-            continue
-        cmd, *args = shlex.split(readInput)
+            self.interface.module = moduleClass()
 
-        if cmd == 'help':
-            printHelp()
-        elif cmd == 'listmods':
-            listModules()
-        elif cmd == 'use':
-            if len(args) == 0:
-                printHelp()
-            else:
-                useModule(args[0])
-        elif cmd == 'options':
-            showOptions()
-        elif cmd == 'set':
-            if len(args) != 2:
-                printHelp()
-            else:
-                setOption(args[0], args[1])
-        elif cmd == 'execute':
-            execute()
-        else:
-            print("Unknown command '{cmd}'. Type 'help' for help.\n\n".format(cmd=cmd))
+        self._interface.setState(ModuleSelectedState())
+            
+    def listModules(self):
+        self.interface.listModules()
+            
+    def printHelp(self):
+        self.interface.printHelp()
+
+class AwaitingCommandState(State):
+        
+    def setOption(self, optionName, optionValue) -> str:
+        return "No module selected."
+        
+    def execute(self) -> str:
+        return "No module selected."
+        
+    def showOptions(self):
+        pass
+
+class ModuleSelectedState(State):
+        
+    def setOption(self, optionName, optionValue) -> str:
+        self.interface.module.set_argument_value(optionName, optionValue)
+        if self.interface.module.all_required_parameters_set():
+            self._interface.setState(ReadyToExecuteState())
+        
+    def execute(self) -> str:
+        return "Some required parameters are missing."
+        
+    def showOptions(self):
+        self.interface.showOptions()
+
+class ReadyToExecuteState(State):
+        
+    def setOption(self, optionName, optionValue) -> str:
+        self.interface.module.set_argument_value(optionName, optionValue) 
+        
+    def execute(self) -> str:
+        self.interface.module.execute()
+        
+    def showOptions(self):
+        self.interface.showOptions()
     
-def main():
-    getModuleList()
-    printBanner()
-    handleCommands()
+def main():    
+    interface = TerminalInterface(AwaitingCommandState())
+    interface.handleCommands()
 
 if __name__ == "__main__":
     main()

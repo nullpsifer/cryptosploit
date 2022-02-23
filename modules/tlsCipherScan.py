@@ -1,7 +1,7 @@
 from modules.abstractModule import *
 from sslyze import *
 
-class ExampleModule(AbstractModule):
+class TlsCipherScanModule(AbstractModule):
 
     name = "tls_cipher_scan"
 
