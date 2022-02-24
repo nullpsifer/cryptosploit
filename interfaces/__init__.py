@@ -1,2 +1,2 @@
-from .Interface import Interface
-from .TerminalInterface import TerminalInterface
+from .interface import Interface
+from .terminal_interface import TerminalInterface

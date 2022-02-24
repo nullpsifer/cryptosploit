@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import *
-from interfaces import Interface
+import interfaces
 
 class State(ABC):
 

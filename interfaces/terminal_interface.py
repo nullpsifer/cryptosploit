@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 from abc import *
 from tabulate import tabulate
 import textwrap
 import shlex
-from interfaces import Interface
+from .interface import Interface
 from states import State, AwaitingCommandState, AwaitingCommandState
 
 class TerminalInterface(Interface):
