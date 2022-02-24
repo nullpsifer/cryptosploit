@@ -1,4 +1,4 @@
-from modules.abstractModule import *
+from modules.abstract_module import *
 from utils.paddingoracle import PaddingOracleAttack
 from json import loads
 import requests

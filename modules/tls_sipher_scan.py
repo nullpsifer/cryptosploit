@@ -1,4 +1,4 @@
-from modules.abstractModule import *
+from modules.abstract_module import *
 from sslyze import *
 
 class TlsCipherScanModule(AbstractModule):
