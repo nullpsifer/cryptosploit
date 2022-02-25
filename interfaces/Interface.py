@@ -27,10 +27,10 @@ class Interface(ABC):
             self._modules.append([c.name, c.description])
 
     def use(self, moduleName):
-        self._state.use(moduleName)
+        return self._state.use(moduleName)
         
     def set(self, varName, varValue):
-        self._state.use(varName, varValue)
+        self._state.setOption(varName, varValue)
         
     def execute(self):
         self._state.execute()
