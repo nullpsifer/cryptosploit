@@ -18,7 +18,9 @@ try:
     #if you need to change this uncomment the following line
     #pyreadline.unicode_helper.pyreadline_codepage="utf8"
 except ImportError:
-    print("Module readline not available.")
+    # shhhh!
+    #print("Module readline not available.")
+    pass
 else:
     #import tab completion functionality
     import rlcompleter
