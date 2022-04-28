@@ -1,3 +1,3 @@
 from __future__ import annotations
 
-from states.State import *
+from .state import *
