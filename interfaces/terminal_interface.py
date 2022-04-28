@@ -4,7 +4,7 @@ from abc import *
 from tabulate import tabulate
 import textwrap
 import shlex
-from .interface import Interface
+from interfaces.Interface import Interface
 from states import State, AwaitingCommandState, AwaitingCommandState
 
 try:
@@ -69,7 +69,7 @@ class TerminalInterface(Interface):
         while True:
             inputPrompt = None
             if self._module != None:
-                inputPrompt = 'csp({})> '.format(self._module.name)
+                inputPrompt = f'csp({self._module.name})> '
             else:
                 inputPrompt = 'csp> '
             readInput = input(inputPrompt)
