@@ -50,6 +50,7 @@ class TerminalInterface(Interface):
         global version
         versionLine = "{0:<28}".format("Cryptosploit v" + self.version)
         modulesLine = "{0:<28}".format(str(len(self._modules)) + " modules")
+        oracleLine = "{0:<28}".format(str(len(self._oracles)) + " oracles")
         print("""\
 
  █▀▀ █▀█ █▄█ █▀█ ▀█▀ █▀█ █▀ █▀█ █░░ █▀█ █ ▀█▀
@@ -60,7 +61,7 @@ class TerminalInterface(Interface):
                                              ██        ██                  
   [ """ + versionLine + """ ]         ██            ██████████████████
   [ """ + modulesLine + """ ]         ██  ████                      ██
-                                           ██  ████      ░░░░██░░██░░██░░██
+  [ """ + oracleLine + """ ]         ██  ████      ░░░░██░░██░░██░░██
                                            ██░░        ░░████  ██  ██  ██  
                                              ██░░░░░░░░██                  
                                                ████████                    
@@ -85,6 +86,8 @@ class TerminalInterface(Interface):
             self._state.printHelp()
         elif cmd == 'listmods':
             self._state.listModules()
+        elif cmd == 'listor':
+            self._state.listOracles()
         elif cmd == 'use':
             if len(args) == 0:
                 self._state.printHelp()
@@ -130,6 +133,7 @@ class TerminalInterface(Interface):
 
 help                   Display this screen.
 listmods               List available modules.
+listor                 List available oracles.
 use {module}           Select module named {module} to use.
 options                Show module options and their current values.
 set {option} {value}   Set option to value by name.
@@ -145,5 +149,16 @@ execute                Execute the module.
                     textwrap.fill(m[1], 50, break_long_words=False) # description
                     ]
                 for m in self._modules
+                ],
+            headers=['Name', 'Description']), '\n')
+            
+    def listOracles(self):
+        print('\n', tabulate(
+            [
+                [
+                    textwrap.fill(m[0], 25, break_long_words=True), # name
+                    textwrap.fill(m[1], 50, break_long_words=False) # description
+                    ]
+                for m in self._oracles
                 ],
             headers=['Name', 'Description']), '\n')

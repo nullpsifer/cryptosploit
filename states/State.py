@@ -36,6 +36,9 @@ class State(ABC):
             
     def listModules(self):
         self.interface.listModules()
+        
+    def listOracles(self):
+        self.interface.listOracles()
             
     def printHelp(self):
         self.interface.printHelp()

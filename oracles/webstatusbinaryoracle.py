@@ -12,6 +12,7 @@ class WebStatusBinaryOracle(AbstractOracle):
                  OracleArgumentDescription('cipherparam', 'Parameter that contains the ciphertext', True),
                  OracleArgumentDescription('params', 'Other parameters to add to the request', False, defaultValue='{}'),
                  OracleArgumentDescription('goodstatuses', 'Comma separated list of good status codes', True),
+            ]
 
     def makeoracle(self):
         url = self.get_argument_value('url')

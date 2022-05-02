@@ -5,6 +5,7 @@ from modules import *
 import pkgutil
 import importlib
 from states import *
+from oracles import *
 
 class Interface(ABC):
 
@@ -12,10 +13,13 @@ class Interface(ABC):
     _module = None
     _modules = []
     _moduleClasses = None
+    _oracles = []
+    _oracleClasses = None
 
     def __init__(self, state: State) -> None:
         self.setState(state)
         self._getModuleList()
+        self._getOracleList()
     
     def setState(self, state: State):
         self._state = state
@@ -25,6 +29,11 @@ class Interface(ABC):
         self._moduleClasses = AbstractModule.__subclasses__()
         for c in self._moduleClasses:
             self._modules.append([c.name, c.description])
+            
+    def _getOracleList(self):
+        self._oracleClasses = AbstractOracle.__subclasses__()
+        for c in self._oracleClasses:
+            self._oracles.append([c.name, c.description])
 
     def use(self, moduleName):
         return self._state.use(moduleName)
@@ -49,6 +58,10 @@ class Interface(ABC):
 
     @abstractmethod
     def listModules(self):
+        pass
+        
+    @abstractmethod
+    def listOracles(self):
         pass
         
     @property
