@@ -24,8 +24,7 @@ class PaddingOracleModule(AbstractModule):
         url = self.get_argument_value('url')
         verb = self.get_argument_value('verb')
         cipherparam = self.get_argument_value('cipherparam')
-        paramstring = self.get_argument_value('otherparams')
-        print(type(paramstring))
+        paramstring = self.get_argument_value('params')
         #params = loads()
         params = {}
         goodpad = int(self.get_argument_value('goodpad'))
@@ -46,4 +45,6 @@ class PaddingOracleModule(AbstractModule):
                 return oracle
 
         poa = PaddingOracleAttack(ciphertext,makeoracle())
-        print(poa.runattack())
+        plaintext = poa.runattack()
+        print(f'{plaintext=}')
+        return
