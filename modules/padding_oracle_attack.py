@@ -17,6 +17,7 @@ class PaddingOracleModule(AbstractModule):
                  ModuleArgumentDescription('badpad', 'Status code for bad pad',False)]
                  
     oracle = None # probably not good
+    oracleRequired = False
 
     def execute(self):
         ciphertext = self.get_argument_value('ciphertext')

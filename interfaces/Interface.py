@@ -38,6 +38,9 @@ class Interface(ABC):
     def use(self, moduleName):
         return self._state.use(moduleName)
         
+    def useOracle(self, moduleName):
+        return self._state.useOracle(moduleName)
+        
     def set(self, varName, varValue):
         self._state.setOption(varName, varValue)
         

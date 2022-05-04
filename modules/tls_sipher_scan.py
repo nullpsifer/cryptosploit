@@ -13,6 +13,7 @@ class TlsCipherScanModule(AbstractModule):
         ]
         
     oracle = None
+    oracleRequired = False
 
     def execute(self):
         host = self.get_argument_value('host')

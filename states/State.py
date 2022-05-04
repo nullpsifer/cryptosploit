@@ -18,6 +18,10 @@ class State(ABC):
         pass
         
     @abstractmethod
+    def useOracle(self, oracleName) -> str:
+        pass
+        
+    @abstractmethod
     def execute(self) -> str:
         pass
         
@@ -31,6 +35,17 @@ class State(ABC):
             return "No module named '{}' found.\n".format(moduleName)
         else:
             self.interface.module = moduleClass()
+
+        self._interface.setState(ModuleSelectedState())
+        
+    def useOracle(self, oracleName) -> str:
+        oracleClass = next((c for c in self.interface.oracleClasses if c.name == oracleName), None)
+        if oracleClass == None:
+            return "No oracle named '{}' found.\n".format(oracleName)
+        else:
+            self.interface.module._remove_oracle_parameters()
+            self.interface.module.oracle = oracleClass()
+            self.interface.module._add_oracle_parameters()
 
         self._interface.setState(ModuleSelectedState())
             
@@ -48,6 +63,9 @@ class AwaitingCommandState(State):
     def setOption(self, optionName, optionValue) -> str:
         return "No module selected."
         
+    def useOracle(self, oracleName) -> str:
+        return "No module selected."
+        
     def execute(self) -> str:
         return "No module selected."
         
@@ -60,6 +78,9 @@ class ModuleSelectedState(State):
         self.interface.module.set_argument_value(optionName, optionValue)
         if self.interface.module.all_required_parameters_set():
             self._interface.setState(ReadyToExecuteState())
+            
+    def useOracle(self, oracleName) -> str:
+        self.interface.useOracle(oracleName)
         
     def execute(self) -> str:
         return "Some required parameters are missing."

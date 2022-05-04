@@ -38,6 +38,8 @@ class AbstractModule(ABC):
     
     oracle: AbstractOracle
     
+    oracleRequired: bool
+    
     arguments: List[ModuleArgumentDescription]
     
     def __init__(self):
@@ -65,7 +67,7 @@ class AbstractModule(ABC):
         """ Returns current value of specified argument. """
         if not argumentName in self._specified_arguments:
             return None
-        return self._specified_arguments[argumentName]
+        return self._specified_arguments[argumentName]        
 
     def set_argument_value(self, argumentName, value):
         """ Sets argument to given value. """
@@ -76,6 +78,8 @@ class AbstractModule(ABC):
             self._specified_arguments[argumentName] = value
         
     def all_required_parameters_set(self):
+        if self.oracleRequired and not self.oracle:
+            return False
         if self.oracle:
             if not self.oracle.all_required_parameters_set():
                 return False

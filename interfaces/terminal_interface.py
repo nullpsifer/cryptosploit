@@ -93,6 +93,11 @@ class TerminalInterface(Interface):
                 self._state.printHelp()
             else:
                 self._printCommandResponse(self._state.use(args[0]))
+        elif cmd == 'useOracle':
+            if len(args) == 0:
+                self._state.printHelp()
+            else:
+                self._printCommandResponse(self._state.useOracle(args[0]))
         elif cmd == 'options':
             self._printCommandResponse(self._state.showOptions())
         elif cmd == 'set':
@@ -100,6 +105,11 @@ class TerminalInterface(Interface):
                 self._state.printHelp()
             else:
                 self._state.setOption(args[0], args[1])
+        elif cmd == 'useOracle':
+            if len(args) != 2:
+                self._state.printHelp()
+            else:
+                self._state.useOracle(args[0])
         elif cmd == 'execute':
             self._printCommandResponse(self._state.execute())
         else:
@@ -110,6 +120,11 @@ class TerminalInterface(Interface):
             print(responseText)
         
     def showOptions(self):
+        if self._module.oracle != None:
+            print('\n', 'Oracle:', self._module.oracle.name, '\n\n')
+        if self._module.oracle != None and self._module.oracleRequired:
+            print('\nOracle (Required!): None\n\n')
+        
         if self._module != None:
             options = [
                 [
@@ -124,6 +139,7 @@ class TerminalInterface(Interface):
                 for arg in self._module.arguments
                 ]
             print('\n', tabulate(options, headers=['Name', 'Description', 'Required', 'Value']), '\n')
+          
             
     def printHelp(self):
         print("""\
@@ -135,6 +151,7 @@ help                   Display this screen.
 listmods               List available modules.
 listor                 List available oracles.
 use {module}           Select module named {module} to use.
+useOracle {oracle}     Select oracle named {oracle} to use.
 options                Show module options and their current values.
 set {option} {value}   Set option to value by name.
 execute                Execute the module.
