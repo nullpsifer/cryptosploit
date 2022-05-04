@@ -15,6 +15,8 @@ class PaddingOracleModule(AbstractModule):
                  ModuleArgumentDescription('params','Any other params and values in JSON format',False,defaultValue='{}'),
                  ModuleArgumentDescription('goodpad','Status code for good pad',False),
                  ModuleArgumentDescription('badpad', 'Status code for bad pad',False)]
+                 
+    oracle = None # probably not good
 
     def execute(self):
         ciphertext = self.get_argument_value('ciphertext')

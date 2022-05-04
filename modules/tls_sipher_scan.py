@@ -11,6 +11,8 @@ class TlsCipherScanModule(AbstractModule):
             ModuleArgumentDescription("host", "Host to scan.", True),
             ModuleArgumentDescription("port", "TLS port.", True, defaultValue=443),
         ]
+        
+    oracle = None
 
     def execute(self):
         host = self.get_argument_value('host')

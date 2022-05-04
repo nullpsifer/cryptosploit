@@ -1,5 +1,6 @@
 from abc import *
 from typing import List
+from oracles.abstract_oracle import *
 
 class ModuleArgumentDescription():
 
@@ -35,6 +36,8 @@ class AbstractModule(ABC):
     
     description: str
     
+    oracle: AbstractOracle
+    
     arguments: List[ModuleArgumentDescription]
     
     def __init__(self):
@@ -42,6 +45,18 @@ class AbstractModule(ABC):
         for argumentDescription in self.__class__.arguments:
             if argumentDescription.defaultValue != None:
                 self.set_argument_value(argumentDescription.name, argumentDescription.defaultValue)
+        self._add_oracle_parameters()
+                
+    def _add_oracle_parameters(self):
+        if self.oracle:
+            for arg in self.oracle.arguments:
+                argumentList.append(ModuleArgumentDescription('o:' + arg.name, arg.description, arg.required, arg.defaultValue))
+                
+    def _remove_oracle_parameters(self):
+        if self.oracle:
+            for arg in self.oracle.arguments:
+                nameToRemove = 'o:' + arg.name
+                argumentList = list(filter(lambda existingArg: existingArg.name != nameToRemove, argumentList))
 
     def get_module_information(self):
         return self._module_information
@@ -54,9 +69,16 @@ class AbstractModule(ABC):
 
     def set_argument_value(self, argumentName, value):
         """ Sets argument to given value. """
-        self._specified_arguments[argumentName] = value
+        if argumentName.startswith('o:'):
+            self._specified_arguments[argumentName] = value
+            self.oracle.set_argument_value(argumentName, value)
+        else:
+            self._specified_arguments[argumentName] = value
         
     def all_required_parameters_set(self):
+        if self.oracle:
+            if not self.oracle.all_required_parameters_set():
+                return False
         for argumentDescription in self.__class__.arguments:
             if argumentDescription.required and argumentDescription.name not in self._specified_arguments:
                 return False
