@@ -4,7 +4,7 @@ from abc import *
 from tabulate import tabulate
 import textwrap
 import shlex
-from .interface import Interface
+from .Interface import Interface
 from states import State, AwaitingCommandState, AwaitingCommandState
 
 try:
