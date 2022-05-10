@@ -20,7 +20,7 @@ class WebStatusBinaryOracle(AbstractOracle):
         cipherparam = self.get_argument_value('cipherparam')
         paramstring = self.get_argument_value('params')
         params = loads(paramstring)
-        goodstatuses = set(map(int,split(',',self.get_argument_value('goodstatuses'))))
+        goodstatuses = set(map(int,self.get_argument_value('goodstatuses').split(',')))
         def oracle(ctext):
             params[cipherparam] = ctext
             if verb == 'GET':

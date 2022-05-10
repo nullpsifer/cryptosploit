@@ -16,7 +16,7 @@ class PaddingOracleModule(AbstractModule):
     def execute(self):
         ciphertext = self.get_argument_value('ciphertext')
 
-        poa = PaddingOracleAttack(ciphertext,makeoracle())
+        poa = PaddingOracleAttack(ciphertext,self.oracle.makeoracle())
         plaintext = poa.runattack()
         print(f'{plaintext=}')
         return

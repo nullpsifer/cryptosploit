@@ -73,7 +73,7 @@ class AbstractModule(ABC):
         """ Sets argument to given value. """
         if argumentName.startswith('o:'):
             self._specified_arguments[argumentName] = value
-            self.oracle.set_argument_value(argumentName, value)
+            self.oracle.set_argument_value(argumentName[2:], value)
         else:
             self._specified_arguments[argumentName] = value
         
@@ -82,9 +82,11 @@ class AbstractModule(ABC):
             return False
         if self.oracle:
             if not self.oracle.all_required_parameters_set():
+                print(f'Specified oracle arguments: {self.oracle._specified_arguments}')
                 return False
         for argumentDescription in self.__class__.arguments:
             if argumentDescription.required and argumentDescription.name not in self._specified_arguments:
+                print(f'Specified module arguments: {self.oracle._specified_arguments}')
                 return False
         return True
 
