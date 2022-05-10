@@ -82,3 +82,12 @@ class Interface(ABC):
     @property
     def modules(self):
         return self._modules
+
+    @property
+    def oracleClasses(self):
+        return self._oracleClasses
+
+
+    @property
+    def oracles(self):
+        return self._oracles

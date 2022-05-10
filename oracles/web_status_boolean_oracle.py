@@ -3,7 +3,7 @@ from json import loads
 import requests
 
 class WebStatusBinaryOracle(AbstractOracle):
-    name = 'web_status_binary_oracle'
+    name = 'web_status_boolean_oracle'
 
     description = 'Creates a binary oracle based on HTTP status code'
 

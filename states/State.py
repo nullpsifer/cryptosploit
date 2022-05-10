@@ -80,8 +80,16 @@ class ModuleSelectedState(State):
             self._interface.setState(ReadyToExecuteState())
             
     def useOracle(self, oracleName) -> str:
-        self.interface.useOracle(oracleName)
-        
+        oracleClass = next((c for c in self.interface.oracleClasses if c.name == oracleName), None)
+        if oracleClass == None:
+            return "No oracle named '{}' found.\n".format(oracleName)
+        else:
+            self.interface.module.oracle = oracleClass()
+            self.interface.module._remove_oracle_parameters()
+            self.interface.module._add_oracle_parameters()
+
+        self._interface.setState(ModuleSelectedState())
+
     def execute(self) -> str:
         return "Some required parameters are missing."
         

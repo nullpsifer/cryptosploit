@@ -52,13 +52,13 @@ class AbstractModule(ABC):
     def _add_oracle_parameters(self):
         if self.oracle:
             for arg in self.oracle.arguments:
-                argumentList.append(ModuleArgumentDescription('o:' + arg.name, arg.description, arg.required, arg.defaultValue))
+                self.arguments.append(ModuleArgumentDescription('o:' + arg.name, arg.description, arg.required, arg.defaultValue))
                 
     def _remove_oracle_parameters(self):
         if self.oracle:
             for arg in self.oracle.arguments:
                 nameToRemove = 'o:' + arg.name
-                argumentList = list(filter(lambda existingArg: existingArg.name != nameToRemove, argumentList))
+                self.arguments = list(filter(lambda existingArg: existingArg.name != nameToRemove, self.arguments))
 
     def get_module_information(self):
         return self._module_information
