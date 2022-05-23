@@ -1,7 +1,5 @@
 from modules.abstract_module import *
 from utils.paddingoracle import PaddingOracleAttack
-from json import loads
-import requests
 
 class PaddingOracleModule(AbstractModule):
     name = 'padding_oracle_attack'
@@ -19,4 +17,4 @@ class PaddingOracleModule(AbstractModule):
         poa = PaddingOracleAttack(ciphertext,self.oracle.makeoracle())
         plaintext = poa.runattack()
         print(f'{plaintext=}')
-        return
+        return plaintext
