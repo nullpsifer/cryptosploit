@@ -5,7 +5,8 @@ from modules.abstract_module import *
 class RepeatedNonceDSa(AbstractModule):
     name = 'repeated_nonce'
 
-    arguments = [ModuleArgumentDescription('public_key','Public Signing Key')]
+    description = 'This module queries a signature oracle until it gets a repeated r value and then computes the private key'
+    arguments = [ModuleArgumentDescription('public_key','Public Signing Key', True)]
     oracle = None
     oracleRequired = True
 

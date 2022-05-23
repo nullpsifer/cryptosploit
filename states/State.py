@@ -102,7 +102,8 @@ class ReadyToExecuteState(State):
         self.interface.module.set_argument_value(optionName, optionValue) 
         
     def execute(self) -> str:
-        self.interface.module.execute()
+        self._interface._returnvalue = self.interface.module.execute()
+        return self.interface.returnvalue
         
     def showOptions(self):
         self.interface.showOptions()

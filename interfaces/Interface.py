@@ -15,6 +15,7 @@ class Interface(ABC):
     _moduleClasses = None
     _oracles = []
     _oracleClasses = None
+    _returnvalue = None
 
     def __init__(self, state: State) -> None:
         self.setState(state)
@@ -87,7 +88,10 @@ class Interface(ABC):
     def oracleClasses(self):
         return self._oracleClasses
 
-
     @property
     def oracles(self):
         return self._oracles
+
+    @property
+    def returnvalue(self):
+        return self._returnvalue
