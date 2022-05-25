@@ -156,7 +156,7 @@ class TerminalInterface(Interface):
                 ]
                 for cmd in self._commands.keys()
             ],
-            headers=['Command', 'Descriptiong']),'\n')
+            headers=['Command', 'Description']),'\n')
 
     def listModules(self):
         print('\n', tabulate(
