@@ -16,6 +16,10 @@ class State(ABC):
     @abstractmethod
     def setOption(self, optionName, optionValue) -> str:
         pass
+
+    @abstractmethod
+    def copyOption(self, optionName) -> str:
+        pass
         
     @abstractmethod
     def useOracle(self, oracleName) -> str:
@@ -62,6 +66,9 @@ class AwaitingCommandState(State):
         
     def setOption(self, optionName, optionValue) -> str:
         return "No module selected."
+
+    def copyOption(self, optionName) -> str:
+        return 'No module selected'
         
     def useOracle(self, oracleName) -> str:
         return "No module selected."
@@ -78,7 +85,10 @@ class ModuleSelectedState(State):
         self.interface.module.set_argument_value(optionName, optionValue)
         if self.interface.module.all_required_parameters_set():
             self._interface.setState(ReadyToExecuteState())
-            
+
+    def copyOption(self, optionName):
+        self.interface.module.set_argument_value(optionName, self.interface.returnvalue)
+
     def useOracle(self, oracleName) -> str:
         oracleClass = next((c for c in self.interface.oracleClasses if c.name == oracleName), None)
         if oracleClass == None:
@@ -99,7 +109,10 @@ class ModuleSelectedState(State):
 class ReadyToExecuteState(State):
         
     def setOption(self, optionName, optionValue) -> str:
-        self.interface.module.set_argument_value(optionName, optionValue) 
+        self.interface.module.set_argument_value(optionName, optionValue)
+
+    def copyOption(self, optionName):
+        self.interface.module.set_argument_value(optionName, self.interface.returnvalue)
         
     def execute(self) -> str:
         self._interface._returnvalue = self.interface.module.execute()

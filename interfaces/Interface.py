@@ -44,6 +44,9 @@ class Interface(ABC):
         
     def set(self, varName, varValue):
         self._state.setOption(varName, varValue)
+
+    def copy(self, varName):
+        self._state.setOption(varName,self._state.interface.returnvalue)
         
     def execute(self):
         self._state.execute()

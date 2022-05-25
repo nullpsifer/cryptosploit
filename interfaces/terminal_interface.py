@@ -45,6 +45,16 @@ class TerminalInterface(Interface):
     def __init__(self, state: State) -> None:
         super().__init__(state)
         self._printBanner()
+        self._commands = {'help': (lambda x: self._state.printHelp(),'', 'Display this screen.'),
+                         'listmods': (lambda x: self._state.listModules(),'','List available modules.'),
+                         'listor': (lambda x: self._state.listOracles(), '', 'List available oracles.'),
+                         'use': (self._use,'{module}','Select module named {module} to use.'),
+                         'useOracle': (self._useOracle,'{oracle}','Select oracle named {oracle} to use.'),
+                         'options': (lambda x: self._printCommandResponse(self._state.showOptions()),'','Show module options and their current values.'),
+                         'set': (self._set,'{option} {value}','Set {option} to {value} by name.'),
+                         'copy': (self._copy,'{option}', 'Set {option} to the output of the last module'),
+                         'execute': (lambda x: self._printCommandResponse(self._state.execute()),'','Execute the module.'),
+                         }
             
     def _printBanner(self):
         global version
@@ -80,40 +90,36 @@ class TerminalInterface(Interface):
                 continue
             cmd, *args = shlex.split(readInput)
             self._doCommand(cmd, *args) 
-        
-    def _doCommand(self, cmd, *args):
-        if cmd == 'help':
+
+    def _use(self, args):
+        if len(args) != 1:
             self._state.printHelp()
-        elif cmd == 'listmods':
-            self._state.listModules()
-        elif cmd == 'listor':
-            self._state.listOracles()
-        elif cmd == 'use':
-            if len(args) == 0:
-                self._state.printHelp()
-            else:
-                self._printCommandResponse(self._state.use(args[0]))
-        elif cmd == 'useOracle':
-            if len(args) == 0:
-                self._state.printHelp()
-            else:
-                self._printCommandResponse(self._state.useOracle(args[0]))
-        elif cmd == 'options':
-            self._printCommandResponse(self._state.showOptions())
-        elif cmd == 'set':
-            if len(args) != 2:
-                self._state.printHelp()
-            else:
-                self._state.setOption(args[0], args[1])
-        elif cmd == 'useOracle':
-            if len(args) != 2:
-                self._state.printHelp()
-            else:
-                self._state.useOracle(args[0])
-        elif cmd == 'execute':
-            self._printCommandResponse(self._state.execute())
-        else:
-            print("Unknown command '{cmd}'. Type 'help' for help.\n\n".format(cmd=cmd))
+            return
+        self._printCommandResponse(self._state.use(args[0]))
+
+    def _useOracle(self,args):
+        if len(args) != 1:
+            self._state.printHelp()
+            return
+        self._printCommandResponse(self._state.useOracle(args[0]))
+
+    def _set(self,args):
+        if len(args) != 2:
+            self._state.printHelp()
+            return
+        self._state.setOption(args[0], args[1])
+
+    def _copy(self,args):
+        if len(args) != 1:
+            self._state.printHelp()
+            return
+        self._state.copyOption(args[0])
+
+    def _doCommand(self, cmd, *args):
+        try:
+            self._commands[cmd][0](args)
+        except KeyError:
+            print(f"Unknown command '{cmd}'. Type 'help' for help.\n\n")
 
     def _printCommandResponse(self, responseText):
         if responseText is not None:
@@ -142,21 +148,15 @@ class TerminalInterface(Interface):
           
             
     def printHelp(self):
-        print("""\
-
- Command                Description
----------------------  -----------------------------------------------
-
-help                   Display this screen.
-listmods               List available modules.
-listor                 List available oracles.
-use {module}           Select module named {module} to use.
-useOracle {oracle}     Select oracle named {oracle} to use.
-options                Show module options and their current values.
-set {option} {value}   Set option to value by name.
-execute                Execute the module.
-
-""")
+        print('\n', tabulate(
+            [
+                [
+                    textwrap.fill(f'{cmd} {self._commands[cmd][1]}',25, break_long_words=True), # command
+                    textwrap.fill(self._commands[cmd][2], 50, break_long_words=False) # description
+                ]
+                for cmd in self._commands.keys()
+            ],
+            headers=['Command', 'Descriptiong']),'\n')
 
     def listModules(self):
         print('\n', tabulate(
