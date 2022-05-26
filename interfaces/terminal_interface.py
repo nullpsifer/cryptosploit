@@ -32,7 +32,7 @@ class Completer(object):
             return [option.name + ' ' for option in self.interface._module.arguments]
         return [option.name + ' ' for option in self.interface._module.arguments if option.name.startswith(args[-1])]
 
-    def complete_set(self, args):
+    def complete_copy(self, args):
         if not args:
             return [option.name + ' ' for option in self.interface._module.arguments]
         return [option.name + ' ' for option in self.interface._module.arguments if option.name.startswith(args[-1])]
