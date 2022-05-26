@@ -1,42 +1,57 @@
 from __future__ import annotations, print_function, unicode_literals, absolute_import
 
 from abc import *
+import logging
 from tabulate import tabulate
 import textwrap
 import shlex
 from .Interface import Interface
 from states import State, AwaitingCommandState, AwaitingCommandState
 
-try:
-    import pyreadline.rlmain
-    #pyreadline.rlmain.config_path=r"c:\xxx\pyreadlineconfig.ini"
-    import readline, atexit
-    import pyreadline.unicode_helper
-    #
-    #
-    #Normally the codepage for pyreadline is set to be sys.stdout.encoding
-    #if you need to change this uncomment the following line
-    #pyreadline.unicode_helper.pyreadline_codepage="utf8"
-except ImportError:
-    # shhhh!
-    #print("Module readline not available.")
-    pass
-else:
-    #import tab completion functionality
-    import rlcompleter
+import readline, atexit
+import re
 
-    #Override completer from rlcompleter to disable automatic ( on callable
-    completer_obj = rlcompleter.Completer()
-    def nop(val, word):
-        return word
-    completer_obj._callable_postfix = nop
-    readline.set_completer(completer_obj.complete)
+RE_SPACE = re.compile('.*\s+$', re.M)
+class Completer(object):
 
-    #activate tab completion
-    readline.parse_and_bind("tab: complete")
-    readline.read_history_file()
-    atexit.register(readline.write_history_file)
-    del readline, rlcompleter, atexit
+    def __init__(self, terminal_interface):
+        self.interface = terminal_interface
+
+    def complete_use(self, args):
+        if not args:
+            return [mod[0] + ' ' for mod in self.interface._modules]
+        return [mod[0] + ' ' for mod in self.interface._modules if mod[0].startswith(args[-1])]
+
+    def complete_useOracle(self, args):
+        if not args:
+            return [oracle[0] + ' ' for oracle in self.interface._oracles]
+        return [oracle[0] + ' ' for oracle in self.interface._oracles if oracle[0].startswith(args[-1])]
+
+    def complete_set(self, args):
+        if not args:
+            return [option.name + ' ' for option in self.interface._module.arguments]
+        return [option.name + ' ' for option in self.interface._module.arguments if option.name.startswith(args[-1])]
+
+    def complete(self, text, state):
+        buffer = readline.get_line_buffer()
+        line = readline.get_line_buffer().split()
+        #testimpl = self.__dict__['complete_use']
+        #print(testimpl)
+        if not line:
+            return [c + ' ' for c in self.interface._commands.keys()][state]
+        if RE_SPACE.match(buffer):
+            line.append('')
+        cmd = line[0].strip()
+        if cmd in set(self.interface._commands.keys()):
+            impl = getattr(self, f'complete_{cmd}')
+            args = line[1:]
+            if args:
+                return (impl(args) + [None])[state]
+            return [cmd + ' '][state]
+        results = [c + ' ' for c in self.interface._commands.keys() if c.startswith(cmd)] + [None]
+        return results[state]
+
+
 
 class TerminalInterface(Interface):
 
@@ -54,13 +69,14 @@ class TerminalInterface(Interface):
                          'set': (self._set,'{option} {value}','Set {option} to {value} by name.'),
                          'copy': (self._copy,'{option}', 'Set {option} to the output of the last module'),
                          'execute': (lambda x: self._printCommandResponse(self._state.execute()),'','Execute the module.'),
+                         'exit': (lambda x: self._exit(), '', 'Exits cryptosploit')
                          }
             
     def _printBanner(self):
         global version
-        versionLine = "{0:<28}".format("Cryptosploit v" + self.version)
-        modulesLine = "{0:<28}".format(str(len(self._modules)) + " modules")
-        oracleLine = "{0:<28}".format(str(len(self._oracles)) + " oracles")
+        versionLine = f'{"Cryptosploit v" + self.version:<28}'
+        modulesLine = f'{str(len(self._modules)) + " modules":<28}'
+        oracleLine = f'{str(len(self._oracles)) + " oracles":<28}'
         print("""\
 
  █▀▀ █▀█ █▄█ █▀█ ▀█▀ █▀█ █▀ █▀█ █░░ █▀█ █ ▀█▀
@@ -79,13 +95,40 @@ class TerminalInterface(Interface):
 """)
 
     def handleCommands(self):
-        while True:
-            inputPrompt = None
+        comp = Completer(self)
+        readline.set_completer_delims(' \t\n')
+        readline.parse_and_bind('tab: complete')
+        readline.set_completer(comp.complete)
+        histfile = '.cryptosploit.history'
+        try:
+            readline.read_history_file(histfile)
+            h_len = readline.get_current_history_length()
+        except FileNotFoundError:
+            open(histfile, 'wb').close()
+            h_len = 0
+
+        def save(prev_h_len, histfile):
+            new_h_len = readline.get_current_history_length()
+            readline.set_history_length(1000)
+            readline.append_history_file(new_h_len - prev_h_len, histfile)
+
+        atexit.register(save, h_len, histfile)
+        readInput = ''
+        while self._continueLoop:
+            modifyPrompt = ''
             if self._module != None:
-                inputPrompt = 'csp({})> '.format(self._module.name)
-            else:
-                inputPrompt = 'csp> '
-            readInput = input(inputPrompt)
+                if self._module.oracle != None:
+                    modifyPrompt = f'({self._module.name}:{self._module.oracle.name})'
+                else:
+                    modifyPrompt = f'({self._module.name})'
+
+            inputPrompt = f'csp{modifyPrompt}> '
+            try:
+                readInput = input(inputPrompt)
+            except KeyError:
+                print(f"Unknown command '{cmd}'. Type 'help' for help.\n\n")
+            except EOFError:
+                self._exit()
             if not readInput or not readInput.strip():
                 continue
             cmd, *args = shlex.split(readInput)
@@ -103,6 +146,10 @@ class TerminalInterface(Interface):
             return
         self._printCommandResponse(self._state.useOracle(args[0]))
 
+    def _exit(self):
+        print('Exiting...')
+        self.continueLoop = False
+
     def _set(self,args):
         if len(args) != 2:
             self._state.printHelp()
@@ -119,12 +166,18 @@ class TerminalInterface(Interface):
         try:
             self._commands[cmd][0](args)
         except KeyError:
-            print(f"Unknown command '{cmd}'. Type 'help' for help.\n\n")
+            print(f'Unknown command: {cmd}')
+
+        except Exception as e:
+            print('Error: exception encountered')
+            logging.error(str(e))
+        return
+
 
     def _printCommandResponse(self, responseText):
         if responseText is not None:
-            print(responseText)
-        
+                print(responseText)
+
     def showOptions(self):
         if self._module.oracle != None:
             print('\n', 'Oracle:', self._module.oracle.name, '\n\n')
@@ -168,7 +221,7 @@ class TerminalInterface(Interface):
                 for m in self._modules
                 ],
             headers=['Name', 'Description']), '\n')
-            
+
     def listOracles(self):
         print('\n', tabulate(
             [
@@ -179,3 +232,4 @@ class TerminalInterface(Interface):
                 for m in self._oracles
                 ],
             headers=['Name', 'Description']), '\n')
+

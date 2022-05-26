@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from abc import *
 from modules import *
 import pkgutil
@@ -16,12 +17,14 @@ class Interface(ABC):
     _oracles = []
     _oracleClasses = None
     _returnvalue = None
+    _continueLoop = True
 
     def __init__(self, state: State) -> None:
+        logging.basicConfig(filename='cryptosploit.log', encoding='utf-8', level=logging.DEBUG)
         self.setState(state)
         self._getModuleList()
         self._getOracleList()
-    
+
     def setState(self, state: State):
         self._state = state
         self._state.interface = self
@@ -94,6 +97,14 @@ class Interface(ABC):
     @property
     def oracles(self):
         return self._oracles
+
+    @property
+    def continueLoop(self):
+        return self._continueLoop
+
+    @module.setter
+    def continueLoop(self,continueLoop: bool) -> None:
+        self._continueLoop = continueLoop
 
     @property
     def returnvalue(self):
