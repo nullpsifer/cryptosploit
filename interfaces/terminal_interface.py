@@ -32,22 +32,28 @@ class Completer(object):
             return [option.name + ' ' for option in self.interface._module.arguments]
         return [option.name + ' ' for option in self.interface._module.arguments if option.name.startswith(args[-1])]
 
+    def complete_set(self, args):
+        if not args:
+            return [option.name + ' ' for option in self.interface._module.arguments]
+        return [option.name + ' ' for option in self.interface._module.arguments if option.name.startswith(args[-1])]
+
     def complete(self, text, state):
         buffer = readline.get_line_buffer()
         line = readline.get_line_buffer().split()
-        #testimpl = self.__dict__['complete_use']
-        #print(testimpl)
         if not line:
             return [c + ' ' for c in self.interface._commands.keys()][state]
         if RE_SPACE.match(buffer):
             line.append('')
         cmd = line[0].strip()
+        if len(line)>2:
+            return ([]+[None])[state]
         if cmd in set(self.interface._commands.keys()):
             impl = getattr(self, f'complete_{cmd}')
             args = line[1:]
             if args:
                 return (impl(args) + [None])[state]
-            return [cmd + ' '][state]
+            if len([c for c in self.interface._commands.keys() if c.startswith(cmd)]) == 1:
+                return [cmd + ' '][state]
         results = [c + ' ' for c in self.interface._commands.keys() if c.startswith(cmd)] + [None]
         return results[state]
 
