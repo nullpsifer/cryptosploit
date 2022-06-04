@@ -38,7 +38,7 @@ class WebJsonSignatureOracle(AbstractOracle):
             signature = {}
             for i, component in enumerate(components):
                 signature[component] = respsig[keys[i]]
-            signature['h'] = int.from_bytes(hashfunction(signature['m']).digest(),'big')
+            signature['h'] = int.from_bytes(hashfunction(signature['m'].encode('utf-8')).digest(),'big')
             return signature
         return oracle
 

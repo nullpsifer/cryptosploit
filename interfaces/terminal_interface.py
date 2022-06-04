@@ -131,8 +131,6 @@ class TerminalInterface(Interface):
             inputPrompt = f'csp{modifyPrompt}> '
             try:
                 readInput = input(inputPrompt)
-            except KeyError:
-                print(f"Unknown command '{cmd}'. Type 'help' for help.\n\n")
             except EOFError:
                 self._exit()
             if not readInput or not readInput.strip():
@@ -171,8 +169,9 @@ class TerminalInterface(Interface):
     def _doCommand(self, cmd, *args):
         try:
             self._commands[cmd][0](args)
-        except KeyError:
-            print(f'Unknown command: {cmd}')
+        except KeyError as e:
+            print(f"Unknown command '{cmd}'. Type 'help' for help.\n\n")
+            print(f'KeyException {e}')
 
         except Exception as e:
             print('Error: exception encountered')
