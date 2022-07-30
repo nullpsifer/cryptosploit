@@ -36,7 +36,7 @@ Oracles are stored in the "oracles" folder. Like modules, information about orac
 
 ## Installing
 
-Cryptosploit requires at least Python 3.7. The following non-standard packaes are required:
+Cryptosploit requires at least Python 3.7. The following non-standard packages are required:
 
 - tabulate
 - sslyze
