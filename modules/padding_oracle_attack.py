@@ -8,7 +8,7 @@ class PaddingOracleModule(AbstractModule):
 
     arguments = [ModuleArgumentDescription('ciphertext','Ciphertext to decrypt',True)]
                  
-    oracle = None # probably not good
+    oracle = None
     oracleRequired = True
 
     def execute(self):
