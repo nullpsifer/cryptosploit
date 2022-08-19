@@ -115,8 +115,12 @@ class ReadyToExecuteState(State):
         self.interface.module.set_argument_value(optionName, self.interface.returnvalue)
         
     def execute(self) -> str:
-        self._interface._returnvalue = self.interface.module.execute()
-        return self.interface.returnvalue
+        try:
+            self._interface._returnvalue = self.interface.module.execute()
+            return self.interface.returnvalue
+        except KeyboardInterrupt:
+            print('Keyboard Interrupt requested')
+            return None
         
     def showOptions(self):
         self.interface.showOptions()
