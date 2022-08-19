@@ -5,7 +5,7 @@ import requests
 class WebJsonPublicKey(AbstractOracle):
     name = 'web_json_public_key'
     description = 'Get a public key from a JSON endpoint'
-    arguments = [OracleArgumentDescription('components', 'Comma delimited list of components in a signature',True),
+    arguments = [OracleArgumentDescription('components', 'Comma delimited list of components in a public key',True),
                  OracleArgumentDescription('keys', "The keys used for the necessary components listed in the same order as components", True),
                  OracleArgumentDescription('url', 'End point URL', True),
                  OracleArgumentDescription('verb','HTTP verb for the request', False, defaultValue='GET'),
