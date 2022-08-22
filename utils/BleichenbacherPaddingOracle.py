@@ -1,4 +1,7 @@
 import os
+import datetime
+import time
+
 from tqdm import tqdm
 from utils.pkcs15 import PKCS15
 from gmpy2 import mpz
@@ -16,7 +19,7 @@ class BleichenbacherPOA:
 
     def __init__(self,n :int, e :int, c :int, oracle :callable):
         self.bytelength = n.bit_length()//8
-        self.tqdm = tqdm(total=1000000)
+        self.tqdm = tqdm(total=3000000)
         self.querycount = 0
         self.n = n
         self.e = e
@@ -36,11 +39,22 @@ class BleichenbacherPOA:
             self.querycount += 1
             cprime = (self.c*pow(s,self.e,self.n))%self.n
             if self.oracle(cprime):
+                with open('bleichenbacher.log', 'a') as f:
+                    f.write(f'{datetime.datetime.now()}: {self.s0:0{2 * self.bytelength}X}\n')
                 return s, cprime
 
     def step1(self):
         print('[+] Step 1: Computing s0, cprime, and M')
-        self.s0,self.cprime = self.finds0()
+        print(f'Checking to see if c={self.c:0{2*self.bytelength}X} is already a valid ciphertext')
+        check = self.oracle(self.c)
+        time.sleep(2)
+        if check:
+            print('Initial c was valid')
+            self.s0 = 1
+            self.cprime = self.c
+        else:
+            print('Initial c was not valid, computing s0')
+            self.s0,self.cprime = self.finds0()
         self.M = set([(self.B2,self.B3-1)])
         self.i = 1
 
@@ -74,6 +88,8 @@ class BleichenbacherPOA:
             self.querycount += 1
             cprime = (pow(s1,self.e,self.n) * self.cprime) % self.n
             if self.oracle(cprime):
+                with open('bleichenbacher.log', 'a') as f:
+                    f.write(f'{datetime.datetime.now()}: {s1:0{2 * self.bytelength}X}\n')
                 return s1
             else:
                 s1 += 1
@@ -87,6 +103,8 @@ class BleichenbacherPOA:
             self.querycount += 1
             cprime = (pow(si,self.e,self.n) * self.cprime) % self.n
             if self.oracle(cprime):
+                with open('bleichenbacher.log', 'a') as f:
+                    f.write(f'{datetime.datetime.now()}: {si:0{2 * self.bytelength}X}\n')
                 return si
             else:
                 si +=1
@@ -122,6 +140,8 @@ class BleichenbacherPOA:
                 self.querycount += 1
                 cprime = (pow(si,self.e, self.n) * self.cprime) % self.n
                 if self.oracle(cprime):
+                    with open('bleichenbacher.log', 'a') as f:
+                        f.write(f'{datetime.datetime.now()}: {si:0{2 * self.bytelength}X}\n')
                     return si
             r += 1
 
