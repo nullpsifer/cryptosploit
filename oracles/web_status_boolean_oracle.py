@@ -21,12 +21,17 @@ class WebStatusBinaryOracle(AbstractOracle):
         paramstring = self.get_argument_value('params')
         params = loads(paramstring)
         goodstatuses = set(map(int,self.get_argument_value('goodstatuses').split(',')))
+        #print(goodstatuses)
         def oracle(ctext):
+            if isinstance(ctext,int):
+                ctext = f'{ctext:0{ctext.bit_length()//4}X}'
             params[cipherparam] = ctext
             if verb == 'GET':
                 resp = requests.get(url,params=params)
             else:
                 resp = requests.post(url,params=params)
-            return resp.status_code in goodstatuses
+            statuscode = resp.status_code
+            #print(f'{statuscode=}')
+            return statuscode in goodstatuses
 
         return oracle
