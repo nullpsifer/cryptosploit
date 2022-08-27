@@ -12,6 +12,7 @@ requests = "*"
 tabulate = "*"
 gmpy2 = "*"
 pycryptodome = "*"
+bs4 = "*"
 
 [dev-packages]
 
