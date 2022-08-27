@@ -4,7 +4,7 @@ import time
 
 from tqdm import tqdm
 from utils.pkcs15 import PKCS15
-from gmpy2 import mpz
+from gmpy2 import mpz, gcd
 def ceil(x,y):
     result = int(mpz(x)//mpz(y) + (mpz(x)%mpz(y)!=mpz(0)))
     assert 0<= (result*y)-x <=y-(x%y)
@@ -19,7 +19,7 @@ class BleichenbacherPOA:
 
     def __init__(self,n :int, e :int, c :int, oracle :callable):
         self.bytelength = n.bit_length()//8
-        self.tqdm = tqdm(total=3000000)
+        self.tqdm = tqdm(total=500000)
         self.querycount = 0
         self.n = n
         self.e = e
@@ -47,7 +47,6 @@ class BleichenbacherPOA:
         print('[+] Step 1: Computing s0, cprime, and M')
         print(f'Checking to see if c={self.c:0{2*self.bytelength}X} is already a valid ciphertext')
         check = self.oracle(self.c)
-        time.sleep(2)
         if check:
             print('Initial c was valid')
             self.s0 = 1
@@ -55,6 +54,14 @@ class BleichenbacherPOA:
         else:
             print('Initial c was not valid, computing s0')
             self.s0,self.cprime = self.finds0()
+        try:
+            self.s0inv = pow(self.s0, -1, self.n)
+        except ValueError:
+            p = gcd(self.s0, self.n)
+            q = self.n // p
+            d = pow(self.e, -1, (p - 1) * (q - 1))
+            self.solution = pow(self.c, d, self.n)
+            print(f's0 was not invertible so \n{p=}\n{q=}\nare the factors of {n=}')
         self.M = set([(self.B2,self.B3-1)])
         self.i = 1
 
@@ -190,7 +197,7 @@ class BleichenbacherPOA:
     def step4(self):
         Mlist = list(self.M)
         if len(Mlist) == 1 and Mlist[0][1]==Mlist[0][0]:
-            self.solution = int(list(self.M)[0][0]*pow(self.s0,-1,self.n))%self.n
+            self.solution = int(list(self.M)[0][0] * self.s0inv) % self.n
         else:
             print('[-] Need to go back to step 2 again')
             self.i = self.i +1
