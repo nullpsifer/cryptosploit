@@ -8,7 +8,7 @@ class TestBleichenbacherPOA(TestCase):
     def test_run(self):
         key = RSA.generate(1024)
         pkcs15 = PKCS15(key.n.bit_length()//8)
-        message = b'This is a test message'
+        message = b'Homomorphisms and bad padding are a dangerous combination'
         paddedmessage = pkcs15.pad(message)
         m = paddedmessage
         #print(f'{m:0{key.n.bit_length()//4}x}')
