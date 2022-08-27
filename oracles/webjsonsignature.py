@@ -12,7 +12,7 @@ class WebJsonSignatureOracle(AbstractOracle):
     arguments = [OracleArgumentDescription('components', 'Comma delimited list of components in a signature',True),
                  OracleArgumentDescription('keys', "The keys used for the necessary components listed in the same order as components", True),
                  OracleArgumentDescription('hashkey','If there is a key for the hash algorithm, set it here',False, defaultValue=None),
-                 OracleArgumentDescription('hashalg','If the hash algorithm is not specified, state algorith here', False, defaultValue=''),
+                 OracleArgumentDescription('hashalg','If the hash algorithm is not specified, state algorith here', False, defaultValue=None),
                  OracleArgumentDescription('url', 'End point URL', True),
                  OracleArgumentDescription('verb','HTTP verb for the request', False, defaultValue='GET'),
                  OracleArgumentDescription('params', 'Request parameters', False, defaultValue='{}'),
@@ -32,13 +32,15 @@ class WebJsonSignatureOracle(AbstractOracle):
         def oracle():
             resp = requests.request(verb, url,params=loads(params),headers=loads(headers),cookies=cookies)
             respsig = resp.json()
-            if hashkey:
-                hashalg = respsig[hashkey]
-            hashfunction = hashlib.__dict__[hashalg]
             signature = {}
             for i, component in enumerate(components):
                 signature[component] = respsig[keys[i]]
-            signature['h'] = int.from_bytes(hashfunction(signature['m'].encode('utf-8')).digest(),'big')
+            if hashkey:
+                hashfunction = hashlib.__dict__[respsig[hashkey]]
+                signature['h'] = int.from_bytes(hashfunction(signature['m'].encode('utf-8')).digest(), 'big')
+            if hashalg:
+                hashfunction = hashlib.__dict__[hashalg]
+                signature['h'] = int.from_bytes(hashfunction(signature['m'].encode('utf-8')).digest(),'big')
             return signature
         return oracle
 
