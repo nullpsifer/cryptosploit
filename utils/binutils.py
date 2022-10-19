@@ -55,3 +55,28 @@ class FileHelper():
     def readb64filetobytes(filename):
         with open(filename) as f:
             return base64.b64decode(''.join(f.read().split()))
+
+class RepeatedKeyXOR():
+
+    def __init__(self, key):
+        self.key = key
+        try:
+            self.keyint = int(key, 16)
+            self.key = base64.b16decode(self.key.upper())
+            self.keylength = len(self.key)
+        except ValueError:
+            self.keyint = int.from_bytes(key, 'big')
+            self.keylength = len(self.key)
+
+    def crypt(self, text :bytes):
+        try:
+            inputtext = base64.b16decode(text.upper())
+        except:
+            inputtext = text
+        returntext = b''
+        for i in range(0,len(inputtext), self.keylength):
+            if i + self.keylength < len(inputtext):
+                returntext += (self.keyint^int.from_bytes(inputtext[i:i+self.keylength],'big')).to_bytes(self.keylength,'big')
+            else:
+                returntext += (int.from_bytes(self.key[:len(text)-i],'big')^int.from_bytes(inputtext[i:],'big')).to_bytes(len(inputtext)-i,'big')
+        return returntext
