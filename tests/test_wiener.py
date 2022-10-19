@@ -16,4 +16,7 @@ class Test_Wiener(TestCase):
                 break
             except:
                 continue
-        assert (key.p, key.q, d) == wiener_attack(e,key.n)
+        print(f'{key.n=}\n{e=}')
+        p,q,d = wiener_attack(e,key.n)
+        print(f'Successfully returned {p=}\n{q=}{d=}')
+        assert (key.p, key.q, d) == (p,q,d)
