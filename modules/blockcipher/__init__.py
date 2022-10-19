@@ -1,0 +1,3 @@
+from modules.blockcipher.padding_oracle_attack import PaddingOracleModule
+from modules.blockcipher.passwordcrack import PasswordCrackModule
+from modules.blockcipher.ecboracle import ECBOracleModule
