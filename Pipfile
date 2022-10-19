@@ -13,6 +13,7 @@ tabulate = "*"
 gmpy2 = "*"
 pycryptodome = "*"
 bs4 = "*"
+primefac = {git = "https://github.com/elliptic-shiho/primefac-fork.git"}
 
 [dev-packages]
 
