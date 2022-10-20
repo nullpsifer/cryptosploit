@@ -36,10 +36,4 @@ Oracles are stored in the "oracles" folder. Like modules, information about orac
 
 ## Installing
 
-Cryptosploit requires at least Python 3.7. The following non-standard packages are required:
-
-- tabulate
-- sslyze
-- requests
-- tqdm
-- pyreadline3
+Cryptosploit can be installed with `pipenv install`. For Windows, install git and the pyreadline3 package prior to running this command.
