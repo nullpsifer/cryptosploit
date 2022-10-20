@@ -36,4 +36,4 @@ Oracles are stored in the "oracles" folder. Like modules, information about orac
 
 ## Installing
 
-Cryptosploit can be installed with `pipenv install`. For Windows, install git and the pyreadline3 package prior to running this command.
+Cryptosploit can be installed with `pipenv install` and then used inside of the resulting virtual environment. For Windows, install git and the pyreadline3 package prior to running this command.
