@@ -116,7 +116,7 @@ class TerminalInterface(Interface):
         def save(prev_h_len, histfile):
             new_h_len = readline.get_current_history_length()
             readline.set_history_length(1000)
-            readline.append_history_file(new_h_len - prev_h_len, histfile)
+            readline.write_history_file(histfile)
 
         atexit.register(save, h_len, histfile)
         readInput = ''
