@@ -1,4 +1,5 @@
 from utils.pkcs15 import PKCS15
+from Crypto.PublicKey import RSA
 from modules.abstract_module import *
 from json import loads
 from gmpy2 import gcd
@@ -39,13 +40,7 @@ class RSASignatureFault(AbstractModule):
                         q = n//p
                         if q<p:
                             q,p=p,q
-                        privatekey['p'] = p
-                        privatekey['q'] = q
-                        privatekey['n'] = n
-                        privatekey['d'] = pow(e,-1,(p-1)*(q-1))
-                        privatekey['dp'] = privatekey['d'] % (p-1)
-                        privatekey['dq'] = privatekey['d'] % (q - 1)
-                        keyRecovered = True
-                        break
-        print(f'Private key: {privatekey}')
-        return privatekey
+                        u=pow(p,-1,q)
+                        privatekey = RSA.RsaKey(p=p,q=q,u=u,e=e,d=d,n=n)
+                        print(f'Private key: {privatekey}')
+                        return privatekey
