@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from abc import *
 import interfaces
+import glob
 
 class State(ABC):
 
@@ -20,7 +21,11 @@ class State(ABC):
     @abstractmethod
     def copyOption(self, optionName) -> str:
         pass
-        
+
+    @abstractmethod
+    def openFile(self, filename) -> str:
+        pass
+
     @abstractmethod
     def useOracle(self, oracleName) -> str:
         pass
@@ -69,7 +74,10 @@ class AwaitingCommandState(State):
 
     def copyOption(self, optionName) -> str:
         return 'No module selected'
-        
+
+    def openFile(self, filename) -> str:
+        return 'No module selected'
+
     def useOracle(self, oracleName) -> str:
         return "No module selected."
         
@@ -80,14 +88,22 @@ class AwaitingCommandState(State):
         pass
         
 class ModuleSelectedState(State):
-        
+
     def setOption(self, optionName, optionValue) -> str:
         self.interface.module.set_argument_value(optionName, optionValue)
         if self.interface.module.all_required_parameters_set():
             self._interface.setState(ReadyToExecuteState())
 
     def copyOption(self, optionName):
-        self.interface.module.set_argument_value(optionName, self.interface.returnvalue)
+        self.setOption(optionName, self.interface.returnvalue)
+
+    def openFile(self, args):
+        filetype = args[0]
+        filenames = []
+        for arg in args[1:]:
+            filenames += glob.glob(arg)
+        filedata = [self.interface._filetypes_open[filetype](filename) for filename in filenames]
+        self._interface._returnvalue = filedata
 
     def useOracle(self, oracleName) -> str:
         oracleClass = next((c for c in self.interface.oracleClasses if c.name == oracleName), None)
@@ -112,8 +128,17 @@ class ReadyToExecuteState(State):
         self.interface.module.set_argument_value(optionName, optionValue)
 
     def copyOption(self, optionName):
-        self.interface.module.set_argument_value(optionName, self.interface.returnvalue)
-        
+        self.setOption(optionName, self.interface.returnvalue)
+
+    def openFile(self, filename):
+        filetype = args[0]
+        filenames = []
+        for arg in args[1:]:
+            filenames += glob.glob(arg)
+        filedata = [self.interface._filetypes_open[filetype](filename) for filename in filenames]
+        self._interface._returnvalue = filedata
+
+
     def execute(self) -> str:
         try:
             self._interface._returnvalue = self.interface.module.execute()

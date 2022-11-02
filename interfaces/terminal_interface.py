@@ -1,21 +1,60 @@
 from __future__ import annotations, print_function, unicode_literals, absolute_import
 
 from abc import *
+from cryptography import x509
 import logging
+import json
 from tabulate import tabulate
 import textwrap
 import shlex
 from .Interface import Interface
 from states import State, AwaitingCommandState, AwaitingCommandState
 
+from cryptography.hazmat.primitives.serialization import load_pem_private_key, load_pem_public_key, load_ssh_public_key, load_ssh_private_key, load_der_private_key, load_der_public_key
+
 import readline, atexit
 import re
+import os
 
 RE_SPACE = re.compile('.*\s+$', re.M)
 class Completer(object):
+    # This is based on the code found at https://stackoverflow.com/questions/5637124/tab-completion-in-pythons-raw-input
 
     def __init__(self, terminal_interface):
         self.interface = terminal_interface
+
+    def _listdir(self, root):
+        "List directory 'root' appending the path separator to subdirs."
+        res = []
+        for name in os.listdir(root):
+            path = os.path.join(root, name)
+            if os.path.isdir(path):
+                name += os.sep
+            res.append(name)
+        return res
+
+    def _filetype(self, filetype_prefix=None):
+        if filetype_prefix:
+            return [filetype for filetype in self.interface._filetypes_open.keys() if filetype.startswith(filetype_prefix)]
+        return list(self.interface._filetypes_open.keys())
+
+    def _complete_path(self, path=None):
+        "Perform completion of filesystem path."
+        if not path:
+            return self._listdir('.')
+        dirname, rest = os.path.split(path)
+        tmp = dirname if dirname else '.'
+        res = [os.path.join(dirname, p)
+                for p in self._listdir(tmp) if p.startswith(rest)]
+        # more than one match, or single match which does not exist (typo)
+        if len(res) > 1 or not os.path.exists(path):
+            return res
+        # resolved to a single directory, so return list of files below it
+        if os.path.isdir(path):
+            return [os.path.join(path, p) for p in self._listdir(path)]
+        # exact file match terminates this completion
+        return [path + ' ']
+
 
     def complete_use(self, args):
         if not args:
@@ -37,6 +76,21 @@ class Completer(object):
             return [option.name + ' ' for option in self.interface._module.arguments]
         return [option.name + ' ' for option in self.interface._module.arguments if option.name.startswith(args[-1])]
 
+    def complete_open(self, args):
+        if len(args) < 2:
+            return self._filetype(args[0])
+        if [''] == args[1:]:
+            return self._complete_path()
+        return self._complete_path(args[-1])
+
+    def complete_write(self, args):
+        if len(args) < 2:
+            return self._filetype(args[0])
+        if [''] == args[1:]:
+            return self._complete_path()
+        return self._complete_path(args[-1])
+
+
     def complete(self, text, state):
         buffer = readline.get_line_buffer()
         line = readline.get_line_buffer().split()
@@ -45,7 +99,7 @@ class Completer(object):
         if RE_SPACE.match(buffer):
             line.append('')
         cmd = line[0].strip()
-        if len(line)>2:
+        if cmd in self.interface._commands_fixed_num_args and len(line[1:]) > self.interface._commands_fixed_num_args[cmd]:
             return ([]+[None])[state]
         if cmd in set(self.interface._commands.keys()):
             impl = getattr(self, f'complete_{cmd}')
@@ -66,6 +120,21 @@ class TerminalInterface(Interface):
     def __init__(self, state: State) -> None:
         super().__init__(state)
         self._printBanner()
+        self._commands_fixed_num_args = {'use':1,
+                                         'useOracle':1,
+                                         'set':1,
+                                         'copy':1}
+        self._filetypes_open = {'raw' : self._raw_file,
+                           'json' : self._json_file,
+                           'pem_public_key' : self._pem_public_key,
+                           'pem_private_key' : self._pem_private_key,
+                           'x509_der_cert' : self._x509_der_cert_file,
+                           'x509_pem_cert' : self._x509_pem_cert_file,
+                           'der_public_key' : self._der_public_key,
+                           'der_private_key' : self._der_private_key,
+                           'ssh_public_key' : self._ssh_public_key,
+                           'ssh_private_key' : self._ssh_private_key,
+                                }
         self._commands = {'help': (lambda x: self._state.printHelp(),'', 'Display this screen.'),
                          'listmods': (lambda x: self._state.listModules(),'','List available modules.'),
                          'listor': (lambda x: self._state.listOracles(), '', 'List available oracles.'),
@@ -75,6 +144,9 @@ class TerminalInterface(Interface):
                          'set': (self._set,'{option} {value}','Set {option} to {value} by name.'),
                          'copy': (self._copy,'{option}', 'Set {option} to the output of the last module'),
                          'execute': (lambda x: self._printCommandResponse(self._state.execute()),'','Execute the module.'),
+                         'open': (self._open,'{filetype} {filename}','Open and read {filename}'),
+                         'write': (self._open,'{filetype} {filename}','Write {filename} and convert to {filetype} if necessary'),
+                         'display': (lambda x: print(self.returnvalue), '', 'Display the returned value from the last command'),
                          'exit': (lambda x: self._exit(), '', 'Exits cryptosploit')
                          }
             
@@ -149,6 +221,87 @@ class TerminalInterface(Interface):
             self._state.printHelp()
             return
         self._printCommandResponse(self._state.useOracle(args[0]))
+
+    def _open(self,args):
+        if len(args) < 2:
+            self._state.printHelp()
+            return
+        self._state.openFile(args)
+
+    def _raw_file(self,filename):
+        with open(filename, 'rb') as f:
+            return f.read()
+
+    def _x509_der_cert_file(self,filename):
+        with open(filename, 'rb') as f:
+            try:
+                cert = x509.load_der_x509_certificate(f.read())
+            except ValueError:
+                print('Unable to open cert')
+                cert = None
+            return cert
+
+    def _x509_pem_cert_file(self,filename):
+        with open(filename, 'rb') as f:
+            try:
+                cert = x509.load_pem_x509_certificate(f.read())
+            except ValueError:
+                print('Unable to open cert')
+                cert = None
+            return cert
+
+    def _json_file(self,filename):
+        with open(filename, 'rb') as f:
+            return json.loads(f.read())
+
+    def _pem_public_key(self,filename):
+        with open(filename, 'rb') as f:
+            try:
+                public_key = load_pem_public_key(f.read())
+            except ValueError:
+                print('Unable to load public key')
+                public_key = None
+            return public_key
+
+    def _pem_private_key(self,filename):
+        with open(filename, 'rb') as f:
+            try:
+                private_key = load_pem_private_key(f.read())
+            except ValueError:
+                print('Unable to open private key')
+                private_key = None
+            return private_key
+
+    def _der_public_key(self,filename):
+        with open(filename, 'rb') as f:
+            try:
+                public_key = load_der_public_key(f.read())
+            except ValueError:
+                print('Unable to load public key')
+                public_key = None
+            return public_key
+
+    def _der_private_key(self, filename):
+        with open(filename, 'rb') as f:
+            try:
+                private_key = load_der_private_key(f.read())
+            except ValueError:
+                print('Unable to load private key')
+                private_key = None
+            return private_key
+
+    def _ssh_public_key(self, filename):
+        with open(filename, 'rb') as f:
+            try:
+                public_key = load_ssh_public_key(f.read())
+            except ValueError:
+                print('Unable to load ssh public key')
+                public_key=None
+            return
+
+    def _ssh_private_key(self, filename):
+        with open(filename, 'rb') as f:
+            return load_ssh_private_key(f.read())
 
     def _exit(self):
         print('Exiting...')
