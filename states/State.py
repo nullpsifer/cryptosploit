@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import *
 import interfaces
 import glob
+import os
 
 class State(ABC):
 
@@ -24,6 +25,10 @@ class State(ABC):
 
     @abstractmethod
     def openFile(self, filename) -> str:
+        pass
+
+    @abstractmethod
+    def writeFile(self, filename) -> str:
         pass
 
     @abstractmethod
@@ -78,6 +83,9 @@ class AwaitingCommandState(State):
     def openFile(self, filename) -> str:
         return 'No module selected'
 
+    def writeFile(self, filename) -> str:
+        return 'No module selected'
+
     def useOracle(self, oracleName) -> str:
         return "No module selected."
         
@@ -104,6 +112,17 @@ class ModuleSelectedState(State):
             filenames += glob.glob(arg)
         filedata = [self.interface._filetypes_open[filetype](filename) for filename in filenames]
         self._interface._returnvalue = filedata
+
+    def writeFile(self,args):
+        filetype = args[0]
+        filename, extension = os.path.splitext(args[1])
+        returnvalue = self._interface._returnvalue
+        if isinstance(returnvalue, list) and len(returnvalue) > 1:
+            for i in range(len(returnvalue)):
+                self._interface._filetypes_write[filetype](f'{filename}{i}.{extension}', returnvalue[i])
+            return None
+        self._interface._filetypes_write[filetype](f'{filename}.{extension}', returnvalue[0])
+        return None
 
     def useOracle(self, oracleName) -> str:
         oracleClass = next((c for c in self.interface.oracleClasses if c.name == oracleName), None)
@@ -138,6 +157,16 @@ class ReadyToExecuteState(State):
         filedata = [self.interface._filetypes_open[filetype](filename) for filename in filenames]
         self._interface._returnvalue = filedata
 
+    def writeFile(self,args):
+        filetype = args[0]
+        filename, extension = os.path.splitext(args[1])
+        returnvalue = self._interface._returnvalue
+        if isinstance(returnvalue, list) and len(returnvalue) > 1:
+            for i in range(len(returnvalue)):
+                self._interface._filetypes_write[filetype](f'{filename}{i}{extension}', returnvalue[i])
+            return None
+        self._interface._filetypes_write[filetype](f'{filename}{extension}', returnvalue[0])
+        return None
 
     def execute(self) -> str:
         try:

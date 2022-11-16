@@ -1,6 +1,8 @@
 from __future__ import annotations, print_function, unicode_literals, absolute_import
 
 from abc import *
+
+import Crypto.IO.PEM
 from cryptography import x509
 import logging
 import json
@@ -9,6 +11,7 @@ import textwrap
 import shlex
 from .Interface import Interface
 from states import State, AwaitingCommandState, AwaitingCommandState
+from Crypto.PublicKey import RSA, DSA, ECC
 
 from cryptography.hazmat.primitives.serialization import load_pem_private_key, load_pem_public_key, load_ssh_public_key, load_ssh_private_key, load_der_private_key, load_der_public_key
 
@@ -17,6 +20,7 @@ import re
 import os
 
 RE_SPACE = re.compile('.*\s+$', re.M)
+KEY_TYPES = (RSA.RsaKey, DSA.DsaKey, ECC.EccKey)
 class Completer(object):
     # This is based on the code found at https://stackoverflow.com/questions/5637124/tab-completion-in-pythons-raw-input
 
@@ -37,6 +41,11 @@ class Completer(object):
         if filetype_prefix:
             return [filetype for filetype in self.interface._filetypes_open.keys() if filetype.startswith(filetype_prefix)]
         return list(self.interface._filetypes_open.keys())
+
+    def _filetype_write(self, filetype_prefix=None):
+        if filetype_prefix:
+            return [filetype for filetype in self.interface._filetypes_write.keys() if filetype.startswith(filetype_prefix)]
+        return list(self.interface._filetypes_write.keys())
 
     def _complete_path(self, path=None):
         "Perform completion of filesystem path."
@@ -85,7 +94,7 @@ class Completer(object):
 
     def complete_write(self, args):
         if len(args) < 2:
-            return self._filetype(args[0])
+            return self._filetype_write(args[0])
         if [''] == args[1:]:
             return self._complete_path()
         return self._complete_path(args[-1])
@@ -135,6 +144,17 @@ class TerminalInterface(Interface):
                            'ssh_public_key' : self._ssh_public_key,
                            'ssh_private_key' : self._ssh_private_key,
                                 }
+
+        self._filetypes_write = {'raw' : self._raw_file_write,
+                                'json' : self._json_file_write,
+                                'pem_public_key' : self._pem_public_key_write,
+                                'pem_private_key' : self._pem_private_key_write,
+                                'x509_der_cert' : self._x509_der_cert_file_write,
+                                'x509_pem_cert' : self._x509_pem_cert_file_write,
+                                'der_public_key' : self._der_public_key_write,
+                                'der_private_key' : self._der_private_key_write,
+                                'ssh_public_key' : self._ssh_public_key_write,
+                                }
         self._commands = {'help': (lambda x: self._state.printHelp(),'', 'Display this screen.'),
                          'listmods': (lambda x: self._state.listModules(),'','List available modules.'),
                          'listor': (lambda x: self._state.listOracles(), '', 'List available oracles.'),
@@ -145,7 +165,7 @@ class TerminalInterface(Interface):
                          'copy': (self._copy,'{option}', 'Set {option} to the output of the last module'),
                          'execute': (lambda x: self._printCommandResponse(self._state.execute()),'','Execute the module.'),
                          'open': (self._open,'{filetype} {filename}','Open and read {filename}'),
-                         'write': (self._open,'{filetype} {filename}','Write {filename} and convert to {filetype} if necessary'),
+                         'write': (self._write,'{filetype} {filename}','Write {filename} and convert to {filetype} if necessary'),
                          'display': (lambda x: print(self.returnvalue), '', 'Display the returned value from the last command'),
                          'exit': (lambda x: self._exit(), '', 'Exits cryptosploit')
                          }
@@ -228,9 +248,38 @@ class TerminalInterface(Interface):
             return
         self._state.openFile(args)
 
+    def _write(self,args):
+        if len(args) != 2:
+            self._state.printHelp()
+            return
+        self._state.writeFile(args)
+
     def _raw_file(self,filename):
         with open(filename, 'rb') as f:
             return f.read()
+
+    def _raw_file_write(self,filename,data):
+        with open(filename, 'wb') as f:
+            f.write(data)
+
+    def _public_key_write(self, filename, key, fileformat):
+        assert isinstance(key,KEY_TYPES)
+        key = key.public_key()
+        with open(filename, 'wb') as f:
+            try:
+                f.write(key.export_key(fileformat))
+            except ValueError:
+                print(f'Unable to write public key {key} as {fileformat} to {filename}')
+            return None
+
+    def _private_key_write(self, filename, key, fileformat):
+        assert isinstance(key,KEY_TYPES) and key.has_private()
+        with open(filename, 'wb') as f:
+            try:
+                f.write(key.export_key(fileformat))
+            except ValueError:
+                print(f'Unable to write private key {key} as {fileformat} to {filename}')
+            return None
 
     def _x509_der_cert_file(self,filename):
         with open(filename, 'rb') as f:
@@ -241,6 +290,10 @@ class TerminalInterface(Interface):
                 cert = None
             return cert
 
+    def _x509_der_cert_file_write(self,filename,cert):
+        print('Currently unimplemented')
+        return None
+
     def _x509_pem_cert_file(self,filename):
         with open(filename, 'rb') as f:
             try:
@@ -250,18 +303,33 @@ class TerminalInterface(Interface):
                 cert = None
             return cert
 
+    def _x509_pem_cert_file_write(self,filename,cert):
+        print('Currently unimplemented')
+        return None
+
     def _json_file(self,filename):
         with open(filename, 'rb') as f:
             return json.loads(f.read())
 
+    def _json_file_write(self,filename,data):
+        with open(filename, 'wb') as f:
+            try:
+                f.write(json.dumps(data))
+            except:
+                print('Failed to dump data as json to file')
+        return None
+
     def _pem_public_key(self,filename):
         with open(filename, 'rb') as f:
             try:
-                public_key = load_pem_public_key(f.read())
+                f.write()
             except ValueError:
                 print('Unable to load public key')
                 public_key = None
             return public_key
+
+    def _pem_public_key_write(self,filename, public_key):
+        return self._public_key_write(filename, public_key, 'PEM')
 
     def _pem_private_key(self,filename):
         with open(filename, 'rb') as f:
@@ -272,6 +340,9 @@ class TerminalInterface(Interface):
                 private_key = None
             return private_key
 
+    def _pem_private_key_write(self,filename, key):
+        return self._private_key_write(filename,key,'PEM')
+
     def _der_public_key(self,filename):
         with open(filename, 'rb') as f:
             try:
@@ -280,6 +351,9 @@ class TerminalInterface(Interface):
                 print('Unable to load public key')
                 public_key = None
             return public_key
+
+    def _der_public_key_write(self,filename,key):
+        return self._public_key_write(filename,key,'DER')
 
     def _der_private_key(self, filename):
         with open(filename, 'rb') as f:
@@ -290,6 +364,9 @@ class TerminalInterface(Interface):
                 private_key = None
             return private_key
 
+    def _der_private_key_write(self, filename, key):
+        return self._private_key_write(filename,key,'DER')
+
     def _ssh_public_key(self, filename):
         with open(filename, 'rb') as f:
             try:
@@ -297,7 +374,10 @@ class TerminalInterface(Interface):
             except ValueError:
                 print('Unable to load ssh public key')
                 public_key=None
-            return
+            return public_key
+
+    def _ssh_public_key_write(self, filename, key):
+        return self._public_key_write(filename,key,'OpenSSH')
 
     def _ssh_private_key(self, filename):
         with open(filename, 'rb') as f:
