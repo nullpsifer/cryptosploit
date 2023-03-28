@@ -17,6 +17,8 @@ primefac = {git = "https://github.com/elliptic-shiho/primefac-fork.git"}
 python-magic = "*"
 pyopenssl = "*"
 cryptography = "*"
+ecpy = "*"
+fastecdsa = "*"
 
 [dev-packages]
 
