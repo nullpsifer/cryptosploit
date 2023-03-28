@@ -78,5 +78,9 @@ class RepeatedKeyXOR():
             if i + self.keylength < len(inputtext):
                 returntext += (self.keyint^int.from_bytes(inputtext[i:i+self.keylength],'big')).to_bytes(self.keylength,'big')
             else:
-                returntext += (int.from_bytes(self.key[:len(text)-i],'big')^int.from_bytes(inputtext[i:],'big')).to_bytes(len(inputtext)-i,'big')
+                remaining_length = len(inputtext[i:])
+                keyint = int.from_bytes(self.key[:remaining_length], 'big')
+                textint = int.from_bytes(inputtext[i:],'big')
+                xor = (keyint^textint)
+                returntext += xor.to_bytes(remaining_length,'big')
         return returntext
