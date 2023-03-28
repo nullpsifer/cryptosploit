@@ -1,4 +1,7 @@
 from gmpy2 import gcd
+from utils.units import GroupOfUnits
+from math import ceil, sqrt
+from primefac import factorint
 class InverseException(Exception):
 
     def __init__(self,divisor,modulus):
@@ -58,3 +61,58 @@ def modular_sqrt(n,p):
             m, c, t, r = m_update, pow(b, 2, p), t * pow(b, 2, p) % p, r * b % p
         #check_sqrt(r, n, p)
         return [r, p - r]
+
+def babystep_giantstep(g,h,p):
+    m = ceil(sqrt(p))
+    mytable = {g.zaction(j)._g: j for j in range(m)}
+    try:
+        gminv = g.zaction(-m)
+    except ValueError:
+        return 0
+    for i in range(m):
+        try:
+            return mytable[h.operation(gminv.zaction(i))._g] + i*m
+        except KeyError:
+            continue
+    print('Failed')
+    print(mytable)
+    return None
+
+def naivedlog(g,h,n):
+    x = g
+    print(x)
+    for i in range(n+1):
+        if x.zaction(i) == h:
+            return i
+    print(f'Failed to find discrete log\n{h=}\n{x=}\n{n=}')
+
+def primepower(g, h, p, e):
+    x = 0
+    if pow(p,e) < 1000:
+        return naivedlog(g,h,pow(p,e))
+    gamma = g.zaction(pow(p,e-1))
+    hk = []
+    for k in range(e):
+        hk.append(g.zaction(-x).operation(h).zaction(pow(p,e-1-k)))
+        if p < 10000:
+            d = naivedlog(gamma, hk[-1],p)
+        else:
+            d = babystep_giantstep(gamma,hk[-1],p)
+        x += pow(p,k)*d
+    return x
+
+def pohlig_hellman(g,h,p):
+    g= GroupOfUnits(g,p)
+    h = GroupOfUnits(h,p)
+    order = p-1
+    order_factors = factorint(order)
+    congruences = []
+    for pk,ek in order_factors.items():
+        gk = g.zaction(order//pow(pk,ek))
+        hk = h.zaction(order//pow(pk,ek))
+        print(f'{gk=}\n{hk=}')
+        if gk.is_identity():
+            print(f'{g} has order divisible of {pow(pk,ek)}')
+            continue
+        congruences.append((primepower(gk, hk, pk, ek),pow(pk,ek)))
+    return sunzi(congruences)[0]
