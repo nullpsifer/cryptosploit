@@ -80,8 +80,16 @@ class AwaitingCommandState(State):
     def copyOption(self, optionName) -> str:
         return 'No module selected'
 
-    def openFile(self, filename) -> str:
-        return 'No module selected'
+    def openFile(self, args) -> str:
+        filetype = args[0]
+        filenames = []
+        for arg in args[1:]:
+            filenames += glob.glob(arg)
+        filedata = [self.interface._filetypes_open[filetype](filename) for filename in filenames]
+        if len(filedata) == 1:
+            filedata = filedata[0]
+        self._interface._returnvalue = filedata
+        return None
 
     def writeFile(self, filename) -> str:
         return 'No module selected'
@@ -111,6 +119,8 @@ class ModuleSelectedState(State):
         for arg in args[1:]:
             filenames += glob.glob(arg)
         filedata = [self.interface._filetypes_open[filetype](filename) for filename in filenames]
+        if len(filedata) == 1:
+            filedata = filedata[0]
         self._interface._returnvalue = filedata
 
     def writeFile(self,args):
@@ -121,7 +131,10 @@ class ModuleSelectedState(State):
             for i in range(len(returnvalue)):
                 self._interface._filetypes_write[filetype](f'{filename}{i}.{extension}', returnvalue[i])
             return None
-        self._interface._filetypes_write[filetype](f'{filename}.{extension}', returnvalue[0])
+        if isinstance(returnvalue,list):
+            self._interface._filetypes_write[filetype](f'{filename}.{extension}', returnvalue[0])
+            return None
+        self._interface._filetypes_write[filetype](f'{filename}.{extension}', returnvalue)
         return None
 
     def useOracle(self, oracleName) -> str:
@@ -149,12 +162,14 @@ class ReadyToExecuteState(State):
     def copyOption(self, optionName):
         self.setOption(optionName, self.interface.returnvalue)
 
-    def openFile(self, filename):
+    def openFile(self, args):
         filetype = args[0]
         filenames = []
         for arg in args[1:]:
             filenames += glob.glob(arg)
         filedata = [self.interface._filetypes_open[filetype](filename) for filename in filenames]
+        if len(filedata) == 1:
+            filedata = filedata[0]
         self._interface._returnvalue = filedata
 
     def writeFile(self,args):
@@ -165,7 +180,10 @@ class ReadyToExecuteState(State):
             for i in range(len(returnvalue)):
                 self._interface._filetypes_write[filetype](f'{filename}{i}{extension}', returnvalue[i])
             return None
-        self._interface._filetypes_write[filetype](f'{filename}{extension}', returnvalue[0])
+        if isinstance(returnvalue,list):
+            self._interface._filetypes_write[filetype](f'{filename}{extension}', returnvalue[0])
+            return None
+        self._interface._filetypes_write[filetype](f'{filename}{extension}', returnvalue)
         return None
 
     def execute(self) -> str:

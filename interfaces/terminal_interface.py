@@ -14,6 +14,8 @@ from states import State, AwaitingCommandState, AwaitingCommandState
 from Crypto.PublicKey import RSA, DSA, ECC
 
 from cryptography.hazmat.primitives.serialization import load_pem_private_key, load_pem_public_key, load_ssh_public_key, load_ssh_private_key, load_der_private_key, load_der_public_key
+from cryptography import x509
+from cryptography.hazmat.backends.openssl import rsa, dsa, ec, ed25519, ed448
 
 import readline, atexit
 import re
@@ -166,7 +168,7 @@ class TerminalInterface(Interface):
                          'execute': (lambda x: self._printCommandResponse(self._state.execute()),'','Execute the module.'),
                          'open': (self._open,'{filetype} {filename}','Open and read {filename}'),
                          'write': (self._write,'{filetype} {filename}','Write {filename} and convert to {filetype} if necessary'),
-                         'display': (lambda x: print(self.returnvalue), '', 'Display the returned value from the last command'),
+                         'display': (lambda x: self._display(), '', 'Display the returned value from the last command'),
                          'exit': (lambda x: self._exit(), '', 'Exits cryptosploit')
                          }
             
@@ -230,6 +232,18 @@ class TerminalInterface(Interface):
             cmd, *args = shlex.split(readInput)
             self._doCommand(cmd, *args) 
 
+    def _display(self):
+        displayvalue = self.returnvalue
+        if isinstance(displayvalue,rsa._RSAPublicKey):
+            print(f'RSA Public Key:\ne={displayvalue.public_numbers().e}\nn={displayvalue.public_numbers().n}')
+        if isinstance(displayvalue, rsa._RSAPrivateKey):
+            print(f'RSA Public Key:\ne={displayvalue.public_key().public_numbers().e}\nn={displayvalue.public_key().public_numbers().n}\nd={displayvalue.private_numbers().d}\np={displayvalue.private_numbers().p}\nq={displayvalue.private_numbers().q}\ndmp1={displayvalue.private_numbers().dmp1}\ndmq1={displayvalue.private_numbers().dmq1}\niqmp={displayvalue.private_numbers().iqmp}')
+        elif isinstance(displayvalue, RSA.RsaKey) and displayvalue.has_private():
+            output = f'RSA Private Key:\ne={displayvalue.e}\nn={displayvalue.n}\nd={displayvalue.d}\np={displayvalue.p}\nq={displayvalue.q}\n'
+            print(output)
+        else:
+            print(displayvalue)
+
     def _use(self, args):
         if len(args) != 1:
             self._state.printHelp()
@@ -259,6 +273,7 @@ class TerminalInterface(Interface):
             return f.read()
 
     def _raw_file_write(self,filename,data):
+        print(f'We got the following kind of data to write: {data}')
         with open(filename, 'wb') as f:
             f.write(data)
 
@@ -322,19 +337,19 @@ class TerminalInterface(Interface):
     def _pem_public_key(self,filename):
         with open(filename, 'rb') as f:
             try:
-                f.write()
-            except ValueError:
-                print('Unable to load public key')
+                public_key = load_pem_public_key(f.read())
+            except ValueError as e:
+                print(f'Unable to load public key: {e}')
                 public_key = None
             return public_key
 
     def _pem_public_key_write(self,filename, public_key):
         return self._public_key_write(filename, public_key, 'PEM')
 
-    def _pem_private_key(self,filename):
+    def _pem_private_key(self,filename, password=None):
         with open(filename, 'rb') as f:
             try:
-                private_key = load_pem_private_key(f.read())
+                private_key = load_pem_private_key(f.read(), password)
             except ValueError:
                 print('Unable to open private key')
                 private_key = None
@@ -386,6 +401,7 @@ class TerminalInterface(Interface):
     def _exit(self):
         print('Exiting...')
         self.continueLoop = False
+        quit()
 
     def _set(self,args):
         if len(args) != 2:
