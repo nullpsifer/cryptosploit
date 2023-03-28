@@ -15,5 +15,4 @@ class RepeatedXOR(AbstractModule):
         text = self.get_argument_value('text')
         xorcipher = RepeatedKeyXOR(key)
         returntext = xorcipher.crypt(text)
-        print(f'Crypted value: {returntext}')
         return returntext
