@@ -29,9 +29,12 @@ def chainoffools(publickey :Point):
     newdomain = copy.copy(originalcurve._domain)
     newdomain['name'] = 'CoF' + newdomain['name']
     P = Point(publickey.x, publickey.y,originalcurve)
-    d = SystemRandom().randint(1,publickey.curve.field)
-    newgenerator = pow(d,-1,publickey.curve.field) * P
+    d = SystemRandom().randint(1,publickey.curve.order)
+    newgenerator = pow(d,-1,publickey.curve.order) * P
     newdomain['generator'] = (newgenerator.x,newgenerator.y)
     newcurve = originalcurve.__class__(newdomain)
+    testP = d * newcurve.generator
+    if not( P.x == testP.x and P.y == testP.y):
+        print('Error in constructing generator to correspond with new private key and old public key')
     newpublickey = Point(P.x,P.y,newcurve)
     return d, newpublickey

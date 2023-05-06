@@ -41,6 +41,7 @@ class RSASignatureFault(AbstractModule):
                         if q<p:
                             q,p=p,q
                         u=pow(p,-1,q)
+                        d=pow(e,-1,(p-1)*(q-1))
                         privatekey = RSA.RsaKey(p=p,q=q,u=u,e=e,d=d,n=n)
-                        print(f'Private key: {privatekey}')
+                        print(f'Private key: {privatekey.d=}')
                         return privatekey
