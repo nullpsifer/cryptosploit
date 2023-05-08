@@ -29,15 +29,17 @@ class SendSignature(AbstractModule):
         privatenumbers = cdsa.DSAPrivateNumbers(private_key['x'],public_numbers)
         privatekey = privatenumbers.private_key()
         for halg in HashAlgorithm.__subclasses__():
+            print(halg.name)
             if halg.name == self.get_argument_value('hashAlg'):
                 break
 
-        csignature = decode_dss_signature(privatekey.sign(self.get_argument_value('message').encode('utf-8'),SHA256()))
+        csignature = decode_dss_signature(privatekey.sign(self.get_argument_value('message').encode('utf-8'),halg()))
         #hashfunction = hashlib.__dict__[self.get_argument_value('hashAlg')]
         signature = {'r':csignature[0],
                      's':csignature[1],
                      'm':self.get_argument_value('message'),
-                     'hashAlgo':'sha256'}
+                     'hashAlgo':halg.name}
+        print(signature)
         #signature = self.sign[self.get_argument_value('algorithm')](private_key,k,self.get_argument_value('message').encode('utf-8'),hashfunction)
         oracle = self.oracle.makeoracle()
         return oracle(signature)

@@ -28,6 +28,7 @@ class RepeatedNonceDSa(AbstractModule):
                 s2 = collected_signatures[signature['r']]['s']
                 h2 = collected_signatures[signature['r']]['h']
                 x = dsa.repeated_nonce(h1,s1,r,h2,s2,q)
+                print(f'Verifying private key: {public_key["y"]==pow(public_key["g"],x,public_key["p"])}')
                 print(f'Private key: {x}')
                 return {'p':p,'q':q,'g':public_key['g'],'x':x}
             collected_signatures[signature['r']] = signature
