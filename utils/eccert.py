@@ -1,7 +1,8 @@
 import copy
 from math import ceil
 from random import SystemRandom
-from ecpy.curves import Curve, Point
+from ecpy.curves import Point
+from ecpy.ecdsa import ECPrivateKey
 from Crypto.Util.asn1 import DerSequence, DerOctetString, DerBitString, DerObjectId
 
 def make_privatekey(d :int,generator :Point):
@@ -27,7 +28,7 @@ def make_privatekey(d :int,generator :Point):
 def chainoffools(publickey :Point):
     originalcurve = publickey.curve
     newdomain = copy.copy(originalcurve._domain)
-    newdomain['name'] = 'CoF' + newdomain['name']
+    newdomain['name'] =  newdomain['name']
     P = Point(publickey.x, publickey.y,originalcurve)
     d = SystemRandom().randint(1,publickey.curve.order)
     newgenerator = pow(d,-1,publickey.curve.order) * P
@@ -37,4 +38,4 @@ def chainoffools(publickey :Point):
     if not( P.x == testP.x and P.y == testP.y):
         print('Error in constructing generator to correspond with new private key and old public key')
     newpublickey = Point(P.x,P.y,newcurve)
-    return d, newpublickey
+    return ECPrivateKey(d, newcurve)

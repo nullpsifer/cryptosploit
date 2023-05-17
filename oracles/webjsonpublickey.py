@@ -24,8 +24,17 @@ class WebJsonPublicKey(AbstractOracle):
         def oracle():
             resp = requests.request(verb, url, params=params,headers=headers,cookies=cookies )
             receivedkey = resp.json()
-            key ={}
+            if isinstance(receivedkey,list):
+                rkeys = []
+                for rkey in receivedkey:
+                    key ={}
+                    for i, component in enumerate(components):
+                        key[component] = rkey[keys[i]]
+                    rkeys.append(key)
+                return rkeys
+
+            key = {}
             for i, component in enumerate(components):
-                key[component] = receivedkey[keys[i]]
+                key[component] = rkey[keys[i]]
             return key
         return oracle
