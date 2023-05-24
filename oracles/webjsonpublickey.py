@@ -35,6 +35,6 @@ class WebJsonPublicKey(AbstractOracle):
 
             key = {}
             for i, component in enumerate(components):
-                key[component] = rkey[keys[i]]
+                key[component] = receivedkey[keys[i]]
             return key
         return oracle
