@@ -5,9 +5,19 @@ import cryptography.hazmat.primitives.asymmetric.dsa as cdsa
 from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
 from cryptography.hazmat.primitives.hashes import HashAlgorithm,SHA256
 from ecpy.ecdsa import ECDSA, ECPrivateKey
+from Crypto.PublicKey import DSA
+from Crypto.Signature import DSS
+from Crypto import Hash
 import hashlib
 from utils.dsa import DSASign
 from os import urandom
+
+hash_classes = {'SHA256': Hash.SHA256,
+                'SHA224' Hash.SHA224,
+                'SHA384': Hash.SHA384,
+                'SHA512': Hash.SHA512,
+                'keccak': Hash.keccak,
+                'SHAKE256': Hash.SHAKE256}
 
 class SendSignature(AbstractModule):
     name = 'sendsignature'
@@ -16,6 +26,7 @@ class SendSignature(AbstractModule):
                  ModuleArgumentDescription('message','Message to sign', True),
                  ModuleArgumentDescription('algorithm', 'Signature algorithm', True),
                  ModuleArgumentDescription('hashAlg', 'Hash Algorithm for the signature', True),
+                 ModuleArgumentDescription('encoding', 'Signature encoding {raw, binary, der}', False, defaultValue='raw'),
                  ModuleArgumentDescription('include_public_key', 'Flag to include public key', False, defaultValue='False'),
                  ModuleArgumentDescription('include_params', 'Flag to include key parameters', False, defaultValue='False')]
     oracle = None
@@ -28,25 +39,34 @@ class SendSignature(AbstractModule):
 
     def _dsasign(self):
         private_key = self.get_argument_value('private_key')
-        p = private_key['p']
-        k = int.from_bytes(urandom(p.bit_length()//8),'big') % p
-        parameter_numbers = cdsa.DSAParameterNumbers(private_key['p'], private_key['q'], private_key['g'])
-        public_numbers = cdsa.DSAPublicNumbers(pow(private_key['g'],private_key['x'],private_key['p']), parameter_numbers)
-        privatenumbers = cdsa.DSAPrivateNumbers(private_key['x'],public_numbers)
-        privatekey = privatenumbers.private_key()
-        for halg in HashAlgorithm.__subclasses__():
-            print(halg.name)
-            if halg.name == self.get_argument_value('hashAlg'):
-                break
+        encoding = self.get_argument_value('encoding')
+        hashalg = self.get_argument_value('hashAlg')
+        if encoding == 'raw':
+            encoding = 'binary'
+            convert_to_raw = True
+        if isinstance(private_key,DSA):
+            signer = DSS.new(key,'fips-186-3',encoding=encoding)
+        else:
+            signer = DSS.new(DSA.construct((private_key['y'],
+                                            private_key['g'],
+                                            private_key['p'],
+                                            private_key['q'],
+                                            private_key['x'])),'fips-186-3', encoding=encoding)
+        message = self.get_argument_value('message')
+        hashobj = hash_classes[hashalg].new(message.encode('utf-8'))
+        size = private_key.domain()[1].bit_length()//8
+        signature = signer.sign(hashobj)
+        if convert_to_raw:
+            sig = {'r':signature[:size],'s':signature[size:]}
+        else:
+            sig = base64.b16encode(signature)
+        sig_data= {
+                     'signature':sig,
+                     'm': message,
+                     'hashAlgo':hashalg,
+                     'encoding': encoding}
 
-        csignature = decode_dss_signature(privatekey.sign(self.get_argument_value('message').encode('utf-8'),halg()))
-        #hashfunction = hashlib.__dict__[self.get_argument_value('hashAlg')]
-        signature = {'r':csignature[0],
-                     's':csignature[1],
-                     'm':self.get_argument_value('message'),
-                     'hashAlgo':halg.name}
-        return signature
-        #signature = self.sign[self.get_argument_value('algorithm')](private_key,k,self.get_argument_value('message').encode('utf-8'),hashfunction)
+        return sig_data
 
     def _ecdsa(self):
         private_key = self.get_argument_value('private_key')
