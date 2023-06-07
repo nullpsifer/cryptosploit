@@ -13,7 +13,7 @@ from utils.dsa import DSASign
 from os import urandom
 
 hash_classes = {'SHA256': Hash.SHA256,
-                'SHA224' Hash.SHA224,
+                'SHA224': Hash.SHA224,
                 'SHA384': Hash.SHA384,
                 'SHA512': Hash.SHA512,
                 'keccak': Hash.keccak,
@@ -41,11 +41,12 @@ class SendSignature(AbstractModule):
         private_key = self.get_argument_value('private_key')
         encoding = self.get_argument_value('encoding')
         hashalg = self.get_argument_value('hashAlg')
+        convert_to_raw=False
         if encoding == 'raw':
             encoding = 'binary'
             convert_to_raw = True
-        if isinstance(private_key,DSA):
-            signer = DSS.new(key,'fips-186-3',encoding=encoding)
+        if isinstance(private_key,DSA.DsaKey):
+            signer = DSS.new(private_key,'fips-186-3',encoding=encoding)
         else:
             signer = DSS.new(DSA.construct((private_key['y'],
                                             private_key['g'],
@@ -57,9 +58,9 @@ class SendSignature(AbstractModule):
         size = private_key.domain()[1].bit_length()//8
         signature = signer.sign(hashobj)
         if convert_to_raw:
-            sig = {'r':signature[:size],'s':signature[size:]}
+            sig = {'r':int.from_bytes(signature[:size],'big'),'s':int.from_bytes(signature[size:],'big')}
         else:
-            sig = base64.b16encode(signature)
+            sig = signature
         sig_data= {
                      'signature':sig,
                      'm': message,
