@@ -424,7 +424,7 @@ class TerminalInterface(Interface):
 
         except Exception as e:
             print('Error: exception encountered')
-            logging.error(str(e))
+            logging.exception(str(e))
         return
 
 
@@ -445,7 +445,7 @@ class TerminalInterface(Interface):
                     textwrap.fill(arg.description, 35, break_long_words=False),
                     arg.required,
                     textwrap.fill(
-                        '' if self._module.get_argument_value(arg.name) == None
+                        '' if self._module.get_argument_value(arg.name) is None
                         else str(self._module.get_argument_value(arg.name)),
                         20, break_long_words=True)
                     ]
