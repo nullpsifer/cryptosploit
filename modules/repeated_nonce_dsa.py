@@ -1,6 +1,7 @@
 import utils.dsa as dsa
 from tqdm import tqdm
 from modules.abstract_module import *
+from Crypto.PublicKey import DSA
 
 class RepeatedNonceDSa(AbstractModule):
     name = 'repeated_nonce'
@@ -30,6 +31,10 @@ class RepeatedNonceDSa(AbstractModule):
                 x = dsa.repeated_nonce(h1,s1,r,h2,s2,q)
                 print(f'Verifying private key: {public_key["y"]==pow(public_key["g"],x,public_key["p"])}')
                 print(f'Private key: {x}')
-                return {'p':p,'q':q,'g':public_key['g'],'x':x}
+                return DSA.construct((public_key['y'],
+                              public_key['g'],
+                              public_key['p'],
+                              public_key['q'],
+                              x))
             collected_signatures[signature['r']] = signature
             t.set_description(f'Collected {len(collected_signatures)} signatures')

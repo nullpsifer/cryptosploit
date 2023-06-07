@@ -1,4 +1,5 @@
 import utils.dsa as dsa
+from Crypto.PublicKey import DSA
 from hashlib import sha256
 from modules.abstract_module import *
 from json import loads
@@ -27,4 +28,8 @@ class KnownNonceDSa(AbstractModule):
         print(dsa.DSAVerify(public_key,data))
         x = dsa.known_nonce(k,h,s,r,q)
         print(f'Private key: {x}')
-        return {'p':p,'q':q,'g':public_key['g'],'x':x}
+        return DSA.construct((public_key['y'],
+                              public_key['g'],
+                              public_key['p'],
+                              public_key['q'],
+                              x))
