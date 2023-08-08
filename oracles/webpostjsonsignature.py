@@ -29,6 +29,7 @@ class WebPostJsonSignature(AbstractOracle):
                 newsignature[keys[i]] = signature[component]
                 if isinstance(newsignature[keys[i]], bytes):
                     newsignature[keys[i]] = encodingfunctions[encoding](newsignature[keys[i]])
+            print(newsignature)
             resp = requests.post(url,json=newsignature,cookies=cookies,headers=headers)
             return resp.json()
         return oracle

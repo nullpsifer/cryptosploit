@@ -41,31 +41,21 @@ class SendSignature(AbstractModule):
         private_key = self.get_argument_value('private_key')
         encoding = self.get_argument_value('encoding')
         hashalg = self.get_argument_value('hashAlg')
-        convert_to_raw=False
-        if encoding == 'raw':
-            encoding = 'binary'
-            convert_to_raw = True
         if isinstance(private_key,DSA.DsaKey):
-            signer = DSS.new(private_key,'fips-186-3',encoding=encoding)
+            signer = DSS.new(private_key,'fips-186-3')
         else:
             signer = DSS.new(DSA.construct((private_key['y'],
                                             private_key['g'],
                                             private_key['p'],
                                             private_key['q'],
-                                            private_key['x'])),'fips-186-3', encoding=encoding)
+                                            private_key['x'])),'fips-186-3')
         message = self.get_argument_value('message')
         hashobj = hash_classes[hashalg].new(message.encode('utf-8'))
-        size = private_key.domain()[1].bit_length()//8
         signature = signer.sign(hashobj)
-        if convert_to_raw:
-            sig = {'r':int.from_bytes(signature[:size],'big'),'s':int.from_bytes(signature[size:],'big')}
-        else:
-            sig = signature
         sig_data= {
-                     'signature':sig,
+                     'signature':signature,
                      'm': message,
-                     'hashAlgo':hashalg,
-                     'encoding': encoding}
+                 'hashAlgo':hashalg}
 
         return sig_data
 

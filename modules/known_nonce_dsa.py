@@ -1,3 +1,5 @@
+import base64
+
 import utils.dsa as dsa
 from Crypto.PublicKey import DSA
 from hashlib import sha256
@@ -20,7 +22,9 @@ class KnownNonceDSa(AbstractModule):
         q = public_key['q']
         oracle = self.oracle.makeoracle()
         data = oracle()
-        h = int.from_bytes(sha256(data['m'].encode('utf-8')).digest(),'big')
+        hbytes = sha256(data['m'].encode('utf-8')).digest()
+        print(f"hash: {base64.b16encode(hbytes).decode('utf-8')}")
+        h = int.from_bytes(hbytes,'big')
         k = data['k']
         r = data['r']
         s = data['s']
