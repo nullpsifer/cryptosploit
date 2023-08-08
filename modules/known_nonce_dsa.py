@@ -17,7 +17,6 @@ class KnownNonceDSa(AbstractModule):
             public_key = loads(self.get_argument_value('public_key'))
         else:
             public_key = self.get_argument_value('public_key')
-        p = public_key['p']
         q = public_key['q']
         oracle = self.oracle.makeoracle()
         data = oracle()
@@ -27,6 +26,8 @@ class KnownNonceDSa(AbstractModule):
         s = data['s']
         print(dsa.DSAVerify(public_key,data))
         x = dsa.known_nonce(k,h,s,r,q)
+        if public_key['y'] != pow(g,x,p):
+            print('[-]Incorrect private key computed!!!')
         print(f'Private key: {x}')
         return DSA.construct((public_key['y'],
                               public_key['g'],
