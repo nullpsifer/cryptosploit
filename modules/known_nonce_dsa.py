@@ -26,11 +26,10 @@ class KnownNonceDSa(AbstractModule):
         s = data['s']
         print(dsa.DSAVerify(public_key,data))
         x = dsa.known_nonce(k,h,s,r,q)
-        if public_key['y'] != pow(g,x,p):
+        g = public_key['g']
+        p = public_key['p']
+        y = public_key['y']
+        if y != pow(g,x,p):
             print('[-]Incorrect private key computed!!!')
         print(f'Private key: {x}')
-        return DSA.construct((public_key['y'],
-                              public_key['g'],
-                              public_key['p'],
-                              public_key['q'],
-                              x))
+        return DSA.construct((y,g,p,q,x))
