@@ -39,6 +39,8 @@ class Interface(ABC):
     def _getOracleList(self):
         self._oracleClasses = AbstractOracle.__subclasses__()
         for c in self._oracleClasses:
+            pythonmodule = c.__module__.split('.')[1:-1]
+            c.name = '.'.join(pythonmodule+[c.name])
             self._oracles.append([c.name, c.description])
 
     def use(self, moduleName):
