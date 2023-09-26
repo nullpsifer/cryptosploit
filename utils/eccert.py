@@ -37,5 +37,4 @@ def chainoffools(publickey :Point):
     testP = d * newcurve.generator
     if not( P.x == testP.x and P.y == testP.y):
         print('Error in constructing generator to correspond with new private key and old public key')
-    newpublickey = Point(P.x,P.y,newcurve)
     return ECPrivateKey(d, newcurve)
