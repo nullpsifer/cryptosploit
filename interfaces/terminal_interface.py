@@ -1,5 +1,6 @@
 from __future__ import annotations, print_function, unicode_literals, absolute_import
 
+import socket
 from abc import *
 
 import Crypto.IO.PEM
@@ -87,6 +88,16 @@ class Completer(object):
             return [option.name + ' ' for option in self.interface._module.arguments]
         return [option.name + ' ' for option in self.interface._module.arguments if option.name.startswith(args[-1])]
 
+    def complete_closeSocket(self, args):
+        if not args:
+            return [f'{socketID} ' for socketID in self.interface.sockets.keys()]
+        return [f'{socketID} ' for socketID in self.interface.sockets.keys() if f'{socketID}'.startswith(args[-1])]
+
+    def complete_listSockets(self, args):
+        if not args:
+            return [f'{socketID} ' for socketID in self.interface.sockets.keys()]
+        return [f'{socketID} ' for socketID in self.interface.sockets.keys() if f'{socketID}'.startswith(args[-1])]
+
     def complete_open(self, args):
         if len(args) < 2:
             return self._filetype(args[0])
@@ -130,6 +141,8 @@ class TerminalInterface(Interface):
     
     def __init__(self, state: State) -> None:
         super().__init__(state)
+        self.sockets = {}
+        self.maxsockID = 0
         self._printBanner()
         self._commands_fixed_num_args = {'use':1,
                                          'useOracle':1,
@@ -168,6 +181,9 @@ class TerminalInterface(Interface):
                          'execute': (lambda x: self._printCommandResponse(self._state.execute()),'','Execute the module.'),
                          'open': (self._open,'{filetype} {filename}','Open and read {filename}'),
                          'write': (self._write,'{filetype} {filename}','Write {filename} and convert to {filetype} if necessary'),
+                         'openSocket': (self._openSocket,'{host} {port}','Open TCP/IP socket to {host}:{port}'),
+                         'closeSocket': (self._closeSocket,'{socketID}','Close socket {socketID}'),
+                         'listSockets': (self._listSockets, '{socketIDs}', 'List information about sockets. If IDs are specified, just those sockets, otherwise, all sockets'),
                          'display': (lambda x: self._display(), '', 'Display the returned value from the last command'),
                          'exit': (lambda x: self._exit(), '', 'Exits cryptosploit')
                          }
@@ -261,6 +277,21 @@ class TerminalInterface(Interface):
             self._state.printHelp()
             return
         self._state.openFile(args)
+
+    def _openSocket(self,args):
+        if len(args) != 2:
+            self._state.printHelp()
+            return
+        self._state.openSocket(args[0],int(args[1]))
+
+    def _closeSocket(self,args):
+        if len(args)<1:
+            self._state.printHelp()
+            return
+        self._state.closeSocket(args)
+
+    def _listSockets(self,args):
+        self._state.listSockets(args)
 
     def _write(self,args):
         if len(args) != 2:

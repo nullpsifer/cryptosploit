@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from abc import *
 import interfaces
+import socket
 import glob
 import os
 
@@ -26,6 +27,32 @@ class State(ABC):
     @abstractmethod
     def openFile(self, filename) -> str:
         pass
+
+    def openSocket(self, host, port) -> str:
+        newsocket = socket.socket()
+        newsocket.connect((host,port))
+        socketId = min(range(self.interface.maxsockID+1) - self.interface.sockets.keys())
+        self.interface.sockets[socketId] = (host,int(port),newsocket)
+        if socketId == self.interface.maxsockID:
+            self.interface.maxsockID += 1
+        return f'Socket {socketId} connected to {host}:{port}'
+
+    def closeSocket(self, socketIDs) -> str:
+        for socketID in socketIDs:
+            try:
+                socketTuple = self._interface.sockets[int(socketID)]
+            except KeyError:
+                print(f'Invalid socketID')
+                continue
+            socketTuple[-1].close()
+            del self._interface.sockets[int(socketID)]
+            return 'Sockets closed'
+
+    def listSockets(self,socketIDs):
+        if len(socketIDs) == 0:
+            socketIDs = self._interface.sockets.keys()
+        for socketID in socketIDs:
+            print(f'Socket {socketID} connected to {self._interface.sockets[socketID][0]}:{self._interface.sockets[socketID][1]}')
 
     @abstractmethod
     def writeFile(self, filename) -> str:
