@@ -9,13 +9,11 @@ class Prosign3(AbstractOracle):
 
     description = 'Creates an oracle to get a signature for cryptohack challenge'
 
-    arguments = [OracleArgumentDescription('host','hostname or IP address', True),
-                 OracleArgumentDescription('port', 'TCP port', True),
+    arguments = [OracleArgumentDescription('socketID', 'Socket ID', True),
             ]
 
     def makeoracle(self):
-        host = self.get_argument_value('host')
-        port = self.get_argument_value('port')
+        port = self.terminalself.get_argument_value('socketID')
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((host,int(port)))
         def oracle():
