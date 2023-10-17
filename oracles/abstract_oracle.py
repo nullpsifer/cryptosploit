@@ -36,6 +36,8 @@ class AbstractOracle(ABC):
     description: str
     
     arguments: List[OracleArgumentDescription]
+
+    sockets : dict
     
     def __init__(self):
         self._specified_arguments = {}

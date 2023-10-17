@@ -86,6 +86,7 @@ class State(ABC):
         else:
             self.interface.module._remove_oracle_parameters()
             self.interface.module.oracle = oracleClass()
+            self.interface.module.oracle.sockets = self.interface.sockets
             self.interface.module._add_oracle_parameters()
 
         self._interface.setState(ModuleSelectedState())
@@ -170,6 +171,7 @@ class ModuleSelectedState(State):
             return "No oracle named '{}' found.\n".format(oracleName)
         else:
             self.interface.module.oracle = oracleClass()
+            self.interface.module.oracle.sockets = self.interface.sockets
             self.interface.module._remove_oracle_parameters()
             self.interface.module._add_oracle_parameters()
 
