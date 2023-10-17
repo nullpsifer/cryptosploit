@@ -19,6 +19,7 @@ pyopenssl = "*"
 cryptography = "*"
 ecpy = "*"
 fastecdsa = "*"
+ecdsa = "*"
 
 [dev-packages]
 

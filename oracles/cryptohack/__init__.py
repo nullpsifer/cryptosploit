@@ -1,0 +1,2 @@
+from oracles.cryptohack.cryptohackpasswordaes import CryptohackPasswordAESOracle
+from oracles.cryptohack.cryptohackprosign3 import Prosign3
