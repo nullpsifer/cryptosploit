@@ -59,7 +59,10 @@ class KnownNonceDSa(AbstractModule):
             print(dsa.DSAVerify(public_key,data))
         x = dsa.known_nonce(k,h,s,r,group_order)
         if is_EC:
-            private_key = ECPrivateKey(x,public_key.curve)
+            if public_key is not None:
+                private_key = ECPrivateKey(x,public_key.curve)
+            else:
+                private_key = ECPrivateKey(x,curve)
         else:
             if public_key is not None:
                 y = public_key.y
