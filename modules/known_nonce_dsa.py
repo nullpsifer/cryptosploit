@@ -4,6 +4,8 @@ import utils.dsa as dsa
 from Crypto.PublicKey import DSA
 from ecpy.curves import Curve, Point
 from ecpy.keys import ECPrivateKey
+from ecpy.formatters import encode_sig
+from ecpy.ecdsa import ECDSA
 from hashlib import sha256
 from modules.abstract_module import *
 from json import loads
@@ -63,6 +65,11 @@ class KnownNonceDSa(AbstractModule):
                 private_key = ECPrivateKey(x,public_key.curve)
             else:
                 private_key = ECPrivateKey(x,curve)
+            signer = ECDSA()
+            if signer.verify(h.to_bytes(r.bit_length()//8,'big'),encode_sig(r,s),private_key.get_public_key()):
+                print('Verified private key by using the corresponding public key and verified the signature')
+            else:
+                print('Public key corresponding to private key failed to verify original signature')
         else:
             if public_key is not None:
                 y = public_key.y

@@ -17,7 +17,8 @@ hash_classes = {'SHA256': Hash.SHA256,
                 'SHA384': Hash.SHA384,
                 'SHA512': Hash.SHA512,
                 'keccak': Hash.keccak,
-                'SHAKE256': Hash.SHAKE256}
+                'SHAKE256': Hash.SHAKE256,
+                'SHA1': Hash.SHA1}
 
 class SendSignature(AbstractModule):
     name = 'sendsignature'
@@ -50,7 +51,7 @@ class SendSignature(AbstractModule):
                                             private_key['q'],
                                             private_key['x'])),'fips-186-3')
         message = self.get_argument_value('message')
-        hashobj = hash_classes[hashalg].new(message.encode('utf-8'))
+        hashobj = hash_classes[hashalg.upper()].new(message.encode('utf-8'))
         signature = signer.sign(hashobj)
         sig_data= {
                      'signature':signature,
@@ -62,10 +63,11 @@ class SendSignature(AbstractModule):
     def _ecdsa(self):
         private_key = self.get_argument_value('private_key')
         message = self.get_argument_value('message')
+        hashname = self.get_argument_value('hashAlg').lower()
         if isinstance(private_key,ECPrivateKey):
             public_key = private_key.get_public_key()
             signer = ECDSA()
-            signature = base64.b16encode(signer.sign(message.encode('utf-8'),private_key)).decode('utf-8')
+            signature = base64.b16encode(signer.sign(hashlib.__dict__[hashname](message.encode('utf-8')).digest(),private_key)).decode('utf-8')
             data = {'signature':signature,'m':message}
             if self.get_argument_value('include_public_key') == 'True':
                 data['pubkey'] = (public_key.W.x, public_key.W.y)

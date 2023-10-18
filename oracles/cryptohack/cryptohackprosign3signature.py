@@ -17,15 +17,19 @@ class Prosign3Signature(AbstractOracle):
         socketID = self.get_argument_value('socketID')
         sock = self.sockets[int(socketID)][-1]
         def oracle(signature :dict):
-            new_signature = {'option':'sign_time'}
+            new_signature = {'option':'verify'}
             new_signature['msg'] = signature['m']
             sig = b16decode(signature['signature'].encode('utf-8'))
             r,s = decode_sig(sig)
             new_signature['r'] = f'{r:0{r.bit_length()//4}x}'
             new_signature['s'] = f'{s:0{s.bit_length()//4}x}'
-            sock.sendall(dumps(new_signature).encode('utf-8'))
+            json_data = dumps(new_signature)
+            print(json_data)
+            sock.sendall(json_data.encode('utf-8'))
             raw_resp = sock.recv(1024)
+            print(raw_resp)
             resp = loads(raw_resp)
+            print(resp)
             return resp['flag']
 
         return oracle

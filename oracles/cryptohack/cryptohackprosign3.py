@@ -21,6 +21,7 @@ class Prosign3(AbstractOracle):
             s.sendall(dumps(get_signature).encode('utf-8'))
             signed_time = loads(s.recv(1024))
             kmax = int(signed_time['msg'].split()[-1].split(':')[-1])
+            print(f'{kmax=}')
             temp_secret = 123124
             temp_publickey = Public_key(generator_192, generator_192*temp_secret)
             temp_privatekey = Private_key(temp_publickey, temp_secret)
@@ -30,6 +31,7 @@ class Prosign3(AbstractOracle):
                 temp_sig = temp_privatekey.sign(temp_hash,k)
                 if temp_sig.r == int(signed_time['r'],16):
                     break
+            print(f'{k=}')
             signed_time['h'] = int.from_bytes(sha1(signed_time['msg'].encode('utf-8')).digest(),'big')
             signed_time['k'] = k
             signed_time['r'] = int(signed_time['r'],16)
