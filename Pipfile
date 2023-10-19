@@ -20,6 +20,7 @@ cryptography = "*"
 ecpy = "*"
 fastecdsa = "*"
 ecdsa = "*"
+icecream = "*"
 
 [dev-packages]
 

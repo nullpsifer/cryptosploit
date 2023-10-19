@@ -16,7 +16,7 @@ from Crypto.PublicKey import RSA, DSA, ECC
 
 from cryptography.hazmat.primitives.serialization import load_pem_private_key, load_pem_public_key, load_ssh_public_key, load_ssh_private_key, load_der_private_key, load_der_public_key
 from cryptography import x509
-from cryptography.hazmat.backends.openssl import rsa, dsa, ec, ed25519, ed448
+from cryptography.hazmat.primitives.asymmetric import rsa, dsa, ec, ed25519, ed448
 
 import readline, atexit
 import re
@@ -42,22 +42,25 @@ class Completer(object):
 
     def _filetype(self, filetype_prefix=None):
         if filetype_prefix:
-            return [filetype for filetype in self.interface._filetypes_open.keys() if filetype.startswith(filetype_prefix)]
+            return [filetype+' ' for filetype in self.interface._filetypes_open.keys() if filetype.startswith(filetype_prefix)]
         return list(self.interface._filetypes_open.keys())
 
     def _filetype_write(self, filetype_prefix=None):
         if filetype_prefix:
-            return [filetype for filetype in self.interface._filetypes_write.keys() if filetype.startswith(filetype_prefix)]
+            return [filetype+' ' for filetype in self.interface._filetypes_write.keys() if filetype.startswith(filetype_prefix)]
         return list(self.interface._filetypes_write.keys())
 
-    def _complete_path(self, path=None):
+    def _complete_path(self, path=None, extensions=None):
         "Perform completion of filesystem path."
         if not path:
-            return self._listdir('.')
-        dirname, rest = os.path.split(path)
-        tmp = dirname if dirname else '.'
-        res = [os.path.join(dirname, p)
-                for p in self._listdir(tmp) if p.startswith(rest)]
+            res = self._listdir('.')
+        else:
+            dirname, rest = os.path.split(path)
+            tmp = dirname if dirname else '.'
+            res = [os.path.join(dirname, p)
+                    for p in self._listdir(tmp) if p.startswith(rest)]
+        if extensions:
+            res = [path for path in res if os.path.isdir(path) or os.path.splitext(path)[-1] in extensions]
         # more than one match, or single match which does not exist (typo)
         if len(res) > 1 or not os.path.exists(path):
             return res
@@ -102,8 +105,8 @@ class Completer(object):
         if len(args) < 2:
             return self._filetype(args[0])
         if [''] == args[1:]:
-            return self._complete_path()
-        return self._complete_path(args[-1])
+            return self._complete_path(extensions=self.interface._filetypes_extensions[args[0]])
+        return self._complete_path(args[-1],extensions=self.interface._filetypes_extensions[args[0]])
 
     def complete_write(self, args):
         if len(args) < 2:
@@ -158,6 +161,18 @@ class TerminalInterface(Interface):
                            'der_private_key' : self._der_private_key,
                            'ssh_public_key' : self._ssh_public_key,
                            'ssh_private_key' : self._ssh_private_key,
+                                }
+
+        self._filetypes_extensions = {'raw' : None,
+                                'json' : ['.json'],
+                                'pem_public_key' : ['.pem'],
+                                'pem_private_key' : ['.pem', '.key'],
+                                'x509_der_cert' : ['.der', '.cer'],
+                                'x509_pem_cert' : ['.pem','.crt', '.cer', '.ca-bundle'],
+                                'der_public_key' : ['.der', '.cer'],
+                                'der_private_key' : ['.der','.key'],
+                                'ssh_public_key' : ['.pub'],
+                                'ssh_private_key' : [''],
                                 }
 
         self._filetypes_write = {'raw' : self._raw_file_write,
