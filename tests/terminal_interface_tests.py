@@ -1,5 +1,5 @@
 import unittest
-from basetest import *
+from tests.basetest import *
 
 class TerminalInterfaceTests(unittest.TestCase, BaseTest):
         
