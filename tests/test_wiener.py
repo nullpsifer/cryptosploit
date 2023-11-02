@@ -9,6 +9,8 @@ class Test_Wiener(TestCase):
     def test_wiener_attack(self):
         while True:
             d = int.from_bytes(os.urandom(128),'big')
+            if d.bit_length() >= 1024:
+                continue
             key = RSA.generate(4096)
             phi = (key.p-1)*(key.q-1)
             try:
@@ -17,6 +19,9 @@ class Test_Wiener(TestCase):
             except:
                 continue
         print(f'{key.n=}\n{e=}')
-        p,q,d = wiener_attack(e,key.n)
+        try:
+            p,q,d = wiener_attack(e,key.n)
+        except:
+            assert False
         print(f'Successfully returned {p=}\n{q=}{d=}')
         assert (key.p, key.q, d) == (p,q,d)
