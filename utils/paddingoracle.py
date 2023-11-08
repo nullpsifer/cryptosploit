@@ -64,8 +64,7 @@ class PaddingOracleAttack:
         if self.oracle(ciphertext):
             if self.beginning:
                 self.paddingsize = self.guess[-1]
-                self.guess = bytearray(b'\x00' * (self.blocksize - self.paddingsize) + self.guess[-1].to_bytes(1,
-                                                                                                               'big') * self.paddingsize)
+                self.guess = bytearray(b'\x00' * (self.blocksize - self.paddingsize) + self.guess[-1].to_bytes(1,'big') * self.paddingsize)
                 self.beginning = False
                 self.tqdm.update(n=self.paddingsize)
             else:
