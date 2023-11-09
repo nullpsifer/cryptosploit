@@ -9,6 +9,16 @@ from os import urandom
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 
+plaintexts = ["MDAwMDAwTm93IHRoYXQgdGhlIHBhcnR5IGlzIGp1bXBpbmc=",
+            "MDAwMDAxV2l0aCB0aGUgYmFzcyBraWNrZWQgaW4gYW5kIHRoZSBWZWdhJ3MgYXJlIHB1bXBpbic=",
+            "MDAwMDAyUXVpY2sgdG8gdGhlIHBvaW50LCB0byB0aGUgcG9pbnQsIG5vIGZha2luZw==",
+            "MDAwMDAzQ29va2luZyBNQydzIGxpa2UgYSBwb3VuZCBvZiBiYWNvbg==",
+            "MDAwMDA0QnVybmluZyAnZW0sIGlmIHlvdSBhaW4ndCBxdWljayBhbmQgbmltYmxl",
+            "MDAwMDA1SSBnbyBjcmF6eSB3aGVuIEkgaGVhciBhIGN5bWJhbA==",
+            "MDAwMDA2QW5kIGEgaGlnaCBoYXQgd2l0aCBhIHNvdXBlZCB1cCB0ZW1wbw==",
+            "MDAwMDA3SSdtIG9uIGEgcm9sbCwgaXQncyB0aW1lIHRvIGdvIHNvbG8=",
+            "MDAwMDA4b2xsaW4nIGluIG15IGZpdmUgcG9pbnQgb2g=",
+            "MDAwMDA5aXRoIG15IHJhZy10b3AgZG93biBzbyBteSBoYWlyIGNhbiBibG93"]
 
 class TestCipher():
 
@@ -43,8 +53,7 @@ def makeoracle(testcipher: TestCipher):
 
 class TestPaddingOracleAttack(TestCase):
     def test_runattack(self):
-        with open('cbc_padding_oracle_texts.txt') as f:
-            texts = [b64decode(line.strip().encode('utf-8')) for line in f]
+        texts = [b64decode(line.strip().encode('utf-8')) for line in plaintexts]
         key = urandom(AES.key_size[-1])
         testcipher = TestCipher(key)
         oracle = makeoracle(testcipher)
