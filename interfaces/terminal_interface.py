@@ -5,6 +5,7 @@ from abc import *
 
 import Crypto.IO.PEM
 from cryptography import x509
+from icecream import ic
 import logging
 import json
 from tabulate import tabulate
@@ -108,6 +109,9 @@ class Completer(object):
             return self._complete_path(extensions=self.interface._filetypes_extensions[args[0]])
         return self._complete_path(args[-1],extensions=self.interface._filetypes_extensions[args[0]])
 
+    def complete_runscript(self, args):
+        return self._complete_path(args[0],extensions=['.cst'])
+
     def complete_write(self, args):
         if len(args) < 2:
             return self._filetype_write(args[0])
@@ -200,6 +204,7 @@ class TerminalInterface(Interface):
                          'closeSocket': (self._closeSocket,'{socketID}','Close socket {socketID}'),
                          'listSockets': (self._listSockets, '{socketIDs}', 'List information about sockets. If IDs are specified, just those sockets, otherwise, all sockets'),
                          'display': (lambda x: self._display(), '', 'Display the returned value from the last command'),
+                         'runscript': (self._runscript, '{filename}', 'Run the commands in the script file'),
                          'exit': (lambda x: self._exit(), '', 'Exits cryptosploit')
                          }
             
@@ -313,6 +318,25 @@ class TerminalInterface(Interface):
             self._state.printHelp()
             return
         self._state.writeFile(args)
+
+    def _runscript(self,args):
+        ic(len(args))
+        if len(args) != 1:
+            self._state.printHelp()
+            return
+        with open(args[0]) as f:
+            for line in f:
+                modifyPrompt = ''
+                if self._module != None:
+                    if self._module.oracle != None:
+                        modifyPrompt = f'({self._module.name}:{self._module.oracle.name})'
+                    else:
+                        modifyPrompt = f'({self._module.name})'
+
+                inputPrompt = f'csp{modifyPrompt}> {line}'
+                print(inputPrompt)
+                cmd, *args = shlex.split(line)
+                self._doCommand(cmd, *args)
 
     def _raw_file(self,filename):
         with open(filename, 'rb') as f:
