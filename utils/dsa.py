@@ -20,10 +20,10 @@ def DSASign(privkey,k,m, hashalg):
                           'hashAlgo':'sha256'}
 
 def DSAVerify(pubkey,sig):
-    p = pubkey.p
-    q = pubkey.q
-    g = pubkey.g
-    y = pubkey.y
+    p = pubkey['p']
+    q = pubkey['q']
+    g = pubkey['g']
+    y = pubkey['y']
     r=sig['r']
     s=sig['s']
     m=sig['m']
