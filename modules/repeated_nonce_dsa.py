@@ -1,4 +1,5 @@
 import utils.dsa as dsa
+from math import ceil
 from ecpy.curves import Curve, Point
 from ecpy.keys import ECPrivateKey
 from ecpy.formatters import encode_sig
@@ -64,14 +65,16 @@ class RepeatedNonceDSa(AbstractModule):
                 if is_EC:
                     private_key = ECPrivateKey(x, curve)
                     signer = ECDSA()
-                    if signer.verify(h.to_bytes(r.bit_length() // 8, 'big'), encode_sig(r, s),
+                    if signer.verify(h1.to_bytes(ceil(h1.bit_length() / 8), 'big'), encode_sig(r, s1),
                                      private_key.get_public_key()):
-                        print('Verified private key by using the corresponding public key and verified the signature')
+                        print('[+] Verified private key by using the corresponding public key and verified the signature')
                     else:
+                        print('[-] Incorrect private key computed')
+                        print('[+] Attempting to compute assuming -k value')
                         x=dsa.repeated_nonce(h1,s1,r,h2,-s2,group_order)
                         private_key = ECPrivateKey(x, curve)
                         signer = ECDSA()
-                        if signer.verify(h.to_bytes(r.bit_length() // 8, 'big'), encode_sig(r, s),
+                        if signer.verify(h1.to_bytes(ceil(h1.bit_length() / 8), 'big'), encode_sig(r, s1),
                                          private_key.get_public_key()):
                             print('Verified private key by using the corresponding public key and verified the signature')
                             print(f'Private key: {private_key}')

@@ -68,7 +68,7 @@ class SendSignature(AbstractModule):
             public_key = private_key.get_public_key()
             signer = ECDSA()
             signature = base64.b16encode(signer.sign(hashlib.__dict__[hashname](message.encode('utf-8')).digest(),private_key)).decode('utf-8')
-            data = {'signature':signature,'m':message}
+            data = {'signature':signature.encode('utf-8'),'m':message}
             if self.get_argument_value('include_public_key') == 'True':
                 data['pubkey'] = (public_key.W.x, public_key.W.y)
             if self.get_argument_value('include_params') == 'True':

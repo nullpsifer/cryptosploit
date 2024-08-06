@@ -31,5 +31,9 @@ class WebPostJsonSignature(AbstractOracle):
                     newsignature[keys[i]] = encodingfunctions[encoding](newsignature[keys[i]])
             print(newsignature)
             resp = requests.post(url,json=newsignature,cookies=cookies,headers=headers)
-            return resp.json()
+            try:
+                return resp.json()
+            except:
+                print(resp.text)
+                return ''
         return oracle
