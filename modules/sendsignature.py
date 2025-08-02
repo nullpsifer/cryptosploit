@@ -7,18 +7,20 @@ from cryptography.hazmat.primitives.hashes import HashAlgorithm,SHA256
 from ecpy.ecdsa import ECDSA, ECPrivateKey
 from Crypto.PublicKey import DSA
 from Crypto.Signature import DSS
-from Crypto import Hash
+from Crypto.Hash.SHA224 import SHA224Hash
+from Crypto.Hash.SHA256 import SHA256Hash
+from Crypto.Hash.SHA384 import SHA384Hash
+from Crypto.Hash.SHA512 import SHA512Hash
+from Crypto.Hash.SHA1 import SHA1Hash
 import hashlib
 from utils.dsa import DSASign
 from os import urandom
 
-hash_classes = {'SHA256': Hash.SHA256,
-                'SHA224': Hash.SHA224,
-                'SHA384': Hash.SHA384,
-                'SHA512': Hash.SHA512,
-                'keccak': Hash.keccak,
-                'SHAKE256': Hash.SHAKE256,
-                'SHA1': Hash.SHA1}
+hash_classes = {'SHA256': SHA224Hash,
+                'SHA224': SHA224Hash,
+                'SHA384': SHA384Hash,
+                'SHA512': SHA512Hash,
+                'SHA1': SHA1Hash}
 
 class SendSignature(AbstractModule):
     name = 'sendsignature'
