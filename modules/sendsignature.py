@@ -16,7 +16,7 @@ import hashlib
 from utils.dsa import DSASign
 from os import urandom
 
-hash_classes = {'SHA256': SHA224Hash,
+hash_classes = {'SHA256': SHA256Hash,
                 'SHA224': SHA224Hash,
                 'SHA384': SHA384Hash,
                 'SHA512': SHA512Hash,
