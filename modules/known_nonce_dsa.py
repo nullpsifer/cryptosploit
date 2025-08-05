@@ -58,7 +58,8 @@ class KnownNonceDSa(AbstractModule):
         r = data['r']
         s = data['s']
         if  public_key is not None:
-            print(dsa.DSAVerify(public_key,data))
+            if not dsa.DSAVerify(public_key,data):
+                print('Received invalid signature')
         x = dsa.known_nonce(k,h,s,r,group_order)
         if is_EC:
             if public_key is not None:
